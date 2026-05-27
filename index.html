@@ -1,0 +1,4880 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IoT Admin 可控发布策略原型</title>
+  <style>
+    :root {
+      --app-aside-bg-color: #001529;
+      --app-aside-bg-active: #0b2a4a;
+      --app-bg-color: #f9f9f9;
+      --el-bg-color: #ffffff;
+      --el-color-primary: #4372ff;
+      --el-color-primary-dark-2: #2b6bd9;
+      --el-color-primary-light-9: #ecf5ff;
+      --el-color-primary-light-7: #e0ecff;
+      --el-color-success: #67c23a;
+      --el-color-warning: #e6a23c;
+      --el-color-danger: #f56c6c;
+      --el-color-info: #909399;
+      --el-text-color-primary: #303133;
+      --el-text-color-regular: #606266;
+      --el-text-color-secondary: #909399;
+      --el-text-color-placeholder: #a8abb2;
+      --el-border-color: #dcdfe6;
+      --el-border-color-light: #e4e7ed;
+      --el-border-color-lighter: #ebeef5;
+      --table-head-bg: #fafafa;
+      --gap-8: 8px;
+      --gap-12: 12px;
+      --gap-16: 16px;
+      --gap-24: 24px;
+      --radius: 4px;
+      --aside-width: 208px;
+      --header-height: 54px;
+      --sans: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--app-bg-color);
+      color: var(--el-text-color-primary);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.5;
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: var(--aside-width) minmax(0, 1fr);
+      background: var(--app-bg-color);
+    }
+
+    .aside {
+      background: var(--app-aside-bg-color);
+      color: rgba(255, 255, 255, .78);
+      min-height: 100vh;
+      position: sticky;
+      top: 0;
+      align-self: start;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, .08);
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .brand-mark {
+      width: 30px;
+      height: 30px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, #91d126, #4372ff);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .brand-text {
+      min-width: 0;
+    }
+
+    .brand-title {
+      line-height: 18px;
+      white-space: nowrap;
+    }
+
+    .brand-subtitle {
+      color: rgba(255, 255, 255, .52);
+      font-size: 12px;
+      line-height: 16px;
+      white-space: nowrap;
+    }
+
+    .menu {
+      padding: 8px 0 24px;
+      overflow: auto;
+    }
+
+    .menu-group-title,
+    .menu-item {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 18px;
+      color: rgba(255, 255, 255, .68);
+      white-space: nowrap;
+    }
+
+    .menu-group-title {
+      margin-top: 8px;
+      color: rgba(255, 255, 255, .38);
+      font-size: 12px;
+    }
+
+    .menu-item {
+      height: 42px;
+      border-left: 3px solid transparent;
+      color: rgba(255, 255, 255, .76);
+    }
+
+    .menu-item.active {
+      background: var(--app-aside-bg-active);
+      border-left-color: var(--el-color-primary);
+      color: #fff;
+    }
+
+    .menu-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: .72;
+      flex: 0 0 auto;
+    }
+
+    .shell {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: var(--header-height) minmax(0, 1fr);
+    }
+
+    .header {
+      height: var(--header-height);
+      background: var(--el-bg-color);
+      box-shadow: rgba(0, 0, 0, .06) 0 -1px 0 0 inset;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--gap-16);
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+    }
+
+    .breadcrumb {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 22px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .breadcrumb strong {
+      color: var(--el-text-color-primary);
+      font-weight: 500;
+    }
+
+    .userbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--el-text-color-regular);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--el-color-primary-light-7);
+      color: var(--el-color-primary);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+    }
+
+    .main {
+      min-width: 0;
+      padding: 24px;
+      display: grid;
+      gap: var(--gap-16);
+      align-content: start;
+    }
+
+    .page-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--gap-16);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 28px;
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+
+    .page-desc {
+      margin: 4px 0 0;
+      color: var(--el-text-color-secondary);
+      font-size: 13px;
+      line-height: 20px;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      min-height: 32px;
+      padding: 7px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--el-border-color);
+      background: #fff;
+      color: var(--el-text-color-regular);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-weight: 500;
+      line-height: 16px;
+      text-decoration: none;
+    }
+
+    .btn.primary {
+      background: var(--el-color-primary);
+      border-color: var(--el-color-primary);
+      color: #fff;
+    }
+
+    .btn.primary:hover {
+      background: var(--el-color-primary-dark-2);
+    }
+
+    .btn.link {
+      padding: 0;
+      min-height: auto;
+      border: 0;
+      background: transparent;
+      color: var(--el-color-primary);
+      font-weight: 500;
+    }
+
+    .btn.danger {
+      color: var(--el-color-danger);
+    }
+
+    .btn.action-btn {
+      min-height: 28px;
+      padding: 5px 10px;
+      background: var(--el-color-primary-light-9);
+      border-color: var(--el-color-primary-light-7);
+      color: var(--el-color-primary);
+    }
+
+    .btn:disabled {
+      color: var(--el-text-color-placeholder);
+      border-color: var(--el-border-color-lighter);
+      background: #f5f7fa;
+      cursor: not-allowed;
+    }
+
+    .tabs {
+      min-height: 40px;
+      display: flex;
+      gap: 20px;
+      border-bottom: 1px solid var(--el-border-color-light);
+      background: var(--el-bg-color);
+      padding: 0 20px;
+    }
+
+    .tab {
+      border: 0;
+      background: transparent;
+      color: var(--el-text-color-regular);
+      border-bottom: 2px solid transparent;
+      padding: 0 2px;
+      height: 40px;
+      font-weight: 500;
+    }
+
+    .tab.active {
+      color: var(--el-color-primary);
+      border-bottom-color: var(--el-color-primary);
+    }
+
+    .panel {
+      background: var(--el-bg-color);
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+    }
+
+    .panel-body {
+      padding: 20px;
+    }
+
+    .filter-form {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      min-width: 180px;
+    }
+
+    .field.small {
+      min-width: 132px;
+    }
+
+    .field.wide {
+      min-width: 280px;
+    }
+
+    label {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 1px solid var(--el-border-color);
+      border-radius: var(--radius);
+      color: var(--el-text-color-primary);
+      background: #fff;
+      outline: none;
+    }
+
+    input,
+    select {
+      height: 32px;
+      padding: 0 11px;
+    }
+
+    .readonly-field {
+      min-height: 32px;
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      background: #f5f7fa;
+      color: var(--el-text-color-regular);
+      display: flex;
+      align-items: center;
+      padding: 0 11px;
+      font-size: 13px;
+    }
+
+    textarea {
+      min-height: 82px;
+      padding: 8px 11px;
+      resize: vertical;
+      line-height: 20px;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--el-color-primary);
+    }
+
+    .table-wrap {
+      overflow: auto;
+      border-top: 1px solid var(--el-border-color-lighter);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+    }
+
+    table input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      padding: 0;
+    }
+
+    th,
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--el-border-color-lighter);
+      text-align: left;
+      vertical-align: middle;
+      color: var(--el-text-color-regular);
+      font-size: 14px;
+    }
+
+    th {
+      background: var(--table-head-bg);
+      color: var(--el-text-color-secondary);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .inline-select {
+      width: auto;
+      min-width: 132px;
+    }
+
+    .action-group,
+    .policy-stack {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .strategy-actions {
+      min-width: 156px;
+      flex-wrap: nowrap;
+      white-space: nowrap;
+    }
+
+    .policy-stack {
+      max-width: 360px;
+    }
+
+    .batch-bar {
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 10px 12px;
+      background: #f5f7fa;
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: var(--radius);
+      color: var(--el-text-color-regular);
+    }
+
+    .batch-bar .selection-count {
+      margin-left: auto;
+      color: var(--el-text-color-secondary);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .asset-row-actions {
+      min-width: 112px;
+      flex-wrap: nowrap;
+    }
+
+    .authorization-summary {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .summary-item {
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      background: #fff;
+    }
+
+    .summary-item span {
+      display: block;
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .summary-item strong {
+      display: block;
+      margin-top: 4px;
+      color: var(--el-text-color-primary);
+      font-size: 14px;
+    }
+
+    td strong {
+      color: var(--el-text-color-primary);
+      font-weight: 600;
+    }
+
+    .muted {
+      color: var(--el-text-color-secondary);
+    }
+
+    .subline {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 18px;
+      margin-top: 2px;
+    }
+
+    .tag {
+      min-height: 24px;
+      padding: 4px 8px;
+      border-radius: var(--radius);
+      display: inline-flex;
+      align-items: center;
+      white-space: nowrap;
+      font-size: 12px;
+      line-height: 14px;
+      border: 1px solid transparent;
+      background: #f4f4f5;
+      color: var(--el-color-info);
+      margin: 2px 4px 2px 0;
+    }
+
+    .tag.blue {
+      color: var(--el-color-primary);
+      background: var(--el-color-primary-light-9);
+      border-color: var(--el-color-primary-light-7);
+    }
+
+    .tag.green {
+      color: #529b2e;
+      background: #f0f9eb;
+      border-color: #e1f3d8;
+    }
+
+    .tag.orange {
+      color: #b88230;
+      background: #fdf6ec;
+      border-color: #faecd8;
+    }
+
+    .tag.red {
+      color: var(--el-color-danger);
+      background: #fef0f0;
+      border-color: #fde2e2;
+    }
+
+    .pagination {
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 0 20px;
+      color: var(--el-text-color-secondary);
+      font-size: 13px;
+    }
+
+    .pagination .btn {
+      min-height: 28px;
+      padding: 5px 10px;
+    }
+
+    .pagination .btn.active {
+      border-color: var(--el-color-primary);
+      color: #fff;
+      background: var(--el-color-primary);
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: grid;
+      gap: 16px;
+    }
+
+    .wizard {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(360px, 400px);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--el-text-color-primary);
+    }
+
+    .section-title[data-step],
+    .subpanel h3[data-step] {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-title[data-step]::before,
+    .subpanel h3[data-step]::before {
+      content: attr(data-step);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: inline-grid;
+      place-items: center;
+      color: var(--el-color-primary);
+      background: var(--el-color-primary-light-9);
+      border: 1px solid var(--el-color-primary-light-7);
+      font-size: 12px;
+      font-weight: 600;
+      flex: 0 0 auto;
+    }
+
+    .object-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .object-card {
+      border: 1px solid var(--el-border-color-light);
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 14px;
+      display: grid;
+      gap: 8px;
+      text-align: left;
+      min-height: 116px;
+    }
+
+    .object-card.active {
+      border-color: var(--el-color-primary);
+      background: var(--el-color-primary-light-9);
+    }
+
+    .object-card h3 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 22px;
+      font-weight: 600;
+    }
+
+    .object-card p {
+      margin: 0;
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .compact-form-grid,
+    .threshold-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 0;
+    }
+
+    .compact-form-grid {
+      grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr);
+    }
+
+    .threshold-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .compact-form-grid .field,
+    .threshold-grid .field,
+    .condition-config .field {
+      min-width: 0;
+    }
+
+    .rule-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(300px, .9fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .rule-layout.ota-config-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .rule-layout.condition-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .rule-layout.condition-layout.no-condition {
+      margin-top: 0;
+    }
+
+    .scenario[data-scenario="rn"] .rule-layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .scenario[data-scenario="rn"] .subpanel,
+    .scenario[data-scenario="rn"] .field {
+      min-width: 0;
+    }
+
+    .scenario[data-scenario="rn"] .form-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .scenario[data-scenario="rn"] .detail-list {
+      grid-template-columns: minmax(82px, .38fr) minmax(0, 1fr);
+    }
+
+    .scenario[data-scenario="rn"] .detail-list dd,
+    .scenario[data-scenario="rn"] .alert,
+    .scenario[data-scenario="rn"] .source-meta {
+      overflow-wrap: anywhere;
+    }
+
+    .subpanel {
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      padding: 14px;
+      background: #fff;
+    }
+
+    .subpanel h3 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .source-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .source-card {
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 10px;
+      min-height: 74px;
+    }
+
+    .source-title {
+      color: var(--el-text-color-primary);
+      font-weight: 600;
+      font-size: 13px;
+      line-height: 18px;
+    }
+
+    .source-meta {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 18px;
+      margin-top: 4px;
+    }
+
+    .impact-panel {
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: var(--radius);
+      background: #fafafa;
+      padding: 12px;
+      margin-top: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .impact-panel h4 {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--el-text-color-primary);
+    }
+
+    .impact-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .impact-item {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .impact-label {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .impact-value {
+      color: var(--el-text-color-regular);
+      font-size: 13px;
+      line-height: 20px;
+      overflow-wrap: anywhere;
+    }
+
+    .source-table {
+      width: 100%;
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    #resourceSourcePanel .source-table {
+      max-width: 100%;
+      overflow-x: auto;
+    }
+
+    #resourceSourcePanel .source-row {
+      min-width: 520px;
+    }
+
+    .source-row {
+      display: grid;
+      grid-template-columns: 28px minmax(120px, 1.2fr) minmax(80px, .8fr) minmax(90px, .8fr) minmax(110px, 1fr);
+      gap: 8px;
+      align-items: center;
+      padding: 9px 10px;
+      border-bottom: 1px solid var(--el-border-color-lighter);
+      color: var(--el-text-color-regular);
+      min-width: 0;
+    }
+
+    .source-row:last-child {
+      border-bottom: 0;
+    }
+
+    .source-row.header-row {
+      background: var(--table-head-bg);
+      color: var(--el-text-color-secondary);
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    .source-row input {
+      width: 16px;
+      height: 16px;
+      padding: 0;
+    }
+
+    .source-row span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .disabled-note {
+      color: var(--el-text-color-secondary);
+      background: #f5f7fa;
+      border: 1px dashed var(--el-border-color);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      font-size: 13px;
+      line-height: 20px;
+      margin-top: 12px;
+    }
+
+    .import-box {
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 12px;
+      margin-top: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .import-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .import-title {
+      color: var(--el-text-color-primary);
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .segmented {
+      display: inline-flex;
+      border: 1px solid var(--el-border-color);
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .segmented button {
+      min-width: 66px;
+      height: 30px;
+      border: 0;
+      border-right: 1px solid var(--el-border-color);
+      background: transparent;
+      color: var(--el-text-color-regular);
+    }
+
+    .segmented button:last-child {
+      border-right: 0;
+    }
+
+    .segmented button.active {
+      background: var(--el-color-primary);
+      color: #fff;
+    }
+
+    .condition-row {
+      min-height: 40px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--el-border-color-lighter);
+      padding: 9px 0;
+    }
+
+    .condition-row:last-child {
+      border-bottom: 0;
+    }
+
+    .condition-main {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .add-condition {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .scenario {
+      display: none;
+      margin-top: 16px;
+    }
+
+    .scenario.active {
+      display: block;
+    }
+
+    .alert {
+      border: 1px solid var(--el-border-color-light);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      background: #f5f7fa;
+      color: var(--el-text-color-regular);
+      font-size: 13px;
+      line-height: 20px;
+      margin-top: 12px;
+    }
+
+    .alert.warning {
+      background: #fdf6ec;
+      border-color: #faecd8;
+      color: #8a5a10;
+    }
+
+    .alert.danger {
+      background: #fef0f0;
+      border-color: #fde2e2;
+      color: #9f2d2d;
+    }
+
+    .alert.success {
+      background: #f0f9eb;
+      border-color: #e1f3d8;
+      color: #3d7b22;
+    }
+
+    .preview {
+      position: sticky;
+      top: 72px;
+    }
+
+    .preview .panel-body {
+      display: grid;
+      gap: 12px;
+    }
+
+    .preview .section-title,
+    .preview .alert,
+    .preview .metric-grid {
+      margin-top: 0;
+    }
+
+    .operation-scope {
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .scope-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-weight: 600;
+      color: var(--el-text-color-primary);
+    }
+
+    .scope-list {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+    }
+
+    .scope-list dt {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .scope-list dd {
+      margin: 0;
+      color: var(--el-text-color-regular);
+      font-size: 13px;
+      line-height: 20px;
+      overflow-wrap: anywhere;
+    }
+
+    .state-action-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding-top: 2px;
+    }
+
+    .confirm-toolbar {
+      display: flex;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-top: 2px;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .metric {
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: var(--radius);
+      padding: 10px;
+      background: #fff;
+    }
+
+    .metric-value {
+      color: var(--el-text-color-primary);
+      font-weight: 700;
+      font-size: 18px;
+      line-height: 24px;
+    }
+
+    .metric-label {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 18px;
+      margin-top: 2px;
+    }
+
+    .lookup-layout {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .lookup-nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    .lookup-nav button {
+      height: 42px;
+      border: 1px solid var(--el-border-color-light);
+      background: #fff;
+      border-radius: var(--radius);
+      text-align: left;
+      padding: 0 12px;
+      color: var(--el-text-color-regular);
+    }
+
+    .lookup-nav button.active {
+      border-color: var(--el-color-primary);
+      color: var(--el-color-primary);
+      background: var(--el-color-primary-light-9);
+    }
+
+    .drawer-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .28);
+      display: none;
+      z-index: 100;
+    }
+
+    .drawer-mask.open {
+      display: block;
+    }
+
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .34);
+      z-index: 120;
+      display: none;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .modal-mask.open {
+      display: grid;
+    }
+
+    .modal-card {
+      width: min(520px, 100%);
+      background: #fff;
+      border-radius: var(--radius);
+      border: 1px solid var(--el-border-color-light);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, .18);
+      padding: 22px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .delete-user-summary {
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: var(--radius);
+      background: #fafafa;
+      padding: 10px 12px;
+      color: var(--el-text-color-regular);
+      line-height: 20px;
+    }
+
+    .delete-user-summary strong {
+      color: var(--el-text-color-primary);
+    }
+
+    .progress-track {
+      height: 8px;
+      border-radius: 999px;
+      background: var(--el-border-color-lighter);
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 68%;
+      background: var(--el-color-primary);
+    }
+
+    .toast {
+      position: fixed;
+      top: 72px;
+      right: 24px;
+      z-index: 130;
+      min-width: min(360px, calc(100vw - 32px));
+      border-radius: var(--radius);
+      border: 1px solid #e1f3d8;
+      background: #f0f9eb;
+      color: #3d7b22;
+      padding: 12px 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .12);
+      font-weight: 500;
+    }
+
+    .drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: min(720px, 100vw);
+      height: 100vh;
+      background: #fff;
+      display: grid;
+      grid-template-rows: 56px minmax(0, 1fr) 64px;
+      box-shadow: -8px 0 30px rgba(0, 0, 0, .14);
+    }
+
+    .drawer.wide {
+      width: min(1120px, 100vw);
+    }
+
+    .drawer-header,
+    .drawer-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--el-border-color-light);
+    }
+
+    .drawer-footer {
+      justify-content: flex-end;
+      border-top: 1px solid var(--el-border-color-light);
+      border-bottom: 0;
+    }
+
+    .drawer-title {
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .drawer-body {
+      padding: 20px;
+      overflow: auto;
+      display: grid;
+      gap: 16px;
+      align-content: start;
+    }
+
+    .drawer-form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 0;
+      align-items: start;
+    }
+
+    .drawer-form-grid .field {
+      min-width: 0;
+    }
+
+    .drawer-form-grid .field.full {
+      grid-column: 1 / -1;
+    }
+
+    .drawer-form-grid .subline {
+      overflow-wrap: anywhere;
+    }
+
+    .drawer-form-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0 20px;
+      border-bottom: 1px solid var(--el-border-color-light);
+      background: #fff;
+    }
+
+    #createView.view.active {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) min(1120px, 100vw);
+      grid-template-rows: 56px minmax(0, 1fr);
+      background: rgba(0, 0, 0, .36);
+      gap: 0;
+      align-content: stretch;
+    }
+
+    #createView.view.active .drawer-form-header,
+    #createView.view.active .wizard {
+      grid-column: 2;
+      background: #fff;
+    }
+
+    #createView.view.active .wizard {
+      padding: 16px;
+      overflow: auto;
+      align-items: start;
+    }
+
+    .tips {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: inline-grid;
+      place-items: center;
+      background: var(--el-color-primary-light-9);
+      color: var(--el-color-primary);
+      font-size: 12px;
+      font-weight: 700;
+      margin-left: 4px;
+    }
+
+    .tree-list {
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: var(--radius);
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      max-height: 240px;
+      overflow: auto;
+    }
+
+    .multi-check-grid {
+      border: 1px solid var(--el-border-color);
+      border-radius: var(--radius);
+      background: #fff;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0;
+      overflow: hidden;
+    }
+
+    .multi-check-item {
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-right: 1px solid var(--el-border-color-lighter);
+      border-bottom: 1px solid var(--el-border-color-lighter);
+      color: var(--el-text-color-regular);
+      font-size: 13px;
+    }
+
+    .multi-check-item:nth-child(2n) {
+      border-right: 0;
+    }
+
+    .multi-check-item:nth-last-child(-n + 2) {
+      border-bottom: 0;
+    }
+
+    .tree-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--el-text-color-regular);
+    }
+
+    .tree-item input[type="checkbox"],
+    .multi-check-item input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      padding: 0;
+      flex: 0 0 auto;
+    }
+
+    .tree-child {
+      margin-left: 24px;
+    }
+
+    .detail-list {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr);
+      gap: 10px 12px;
+      color: var(--el-text-color-regular);
+    }
+
+    .detail-list dt {
+      color: var(--el-text-color-secondary);
+    }
+
+    .detail-list dd {
+      margin: 0;
+      min-width: 0;
+    }
+
+    .selection-summary {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 18px;
+      margin-top: 6px;
+    }
+
+    .condition-config {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid var(--el-border-color-lighter);
+      border-radius: var(--radius);
+      background: #fafafa;
+    }
+
+    .condition-config .field.wide,
+    .condition-config .config-note {
+      grid-column: 1 / -1;
+    }
+
+    .condition-config .config-note {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .prototype-annotation-panel {
+      --annotation-accent: #f5b400;
+      position: fixed;
+      top: 0;
+      right: 0;
+      z-index: 150;
+      width: var(--annotation-width, 352px);
+      height: 100vh;
+      background: #fffdf6;
+      border-left: 1px solid #f3d98b;
+      box-shadow: -10px 0 26px rgba(48, 49, 51, .12);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      transform: translateX(100%);
+      transition: transform .18s ease;
+    }
+
+    body.annotation-open .prototype-annotation-panel {
+      transform: translateX(0);
+    }
+
+    body.annotation-open .app {
+      padding-right: var(--annotation-width, 352px);
+    }
+
+    body.annotation-open #createView.view.active {
+      right: var(--annotation-width, 352px);
+      grid-template-columns: minmax(0, 1fr) min(1120px, calc(100vw - var(--annotation-width, 352px)));
+    }
+
+    body.annotation-open .drawer-mask,
+    body.annotation-open .modal-mask {
+      right: var(--annotation-width, 352px);
+    }
+
+    body.annotation-open .drawer {
+      right: var(--annotation-width, 352px);
+      width: min(720px, calc(100vw - var(--annotation-width, 352px)));
+    }
+
+    body.annotation-open .drawer.wide {
+      width: min(1120px, calc(100vw - var(--annotation-width, 352px)));
+    }
+
+    .prototype-annotation-head {
+      padding: 16px;
+      border-bottom: 1px solid #f3d98b;
+      display: grid;
+      gap: 8px;
+    }
+
+    .prototype-annotation-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-weight: 700;
+      color: #5d4100;
+    }
+
+    .prototype-annotation-caption {
+      color: #8a6d18;
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .prototype-annotation-list {
+      padding: 12px;
+      overflow: auto;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .prototype-note-card {
+      border: 1px solid #f1d57c;
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 10px;
+      color: var(--el-text-color-regular);
+      text-align: left;
+      display: grid;
+      grid-template-columns: 26px minmax(0, 1fr);
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(90, 64, 0, .06);
+    }
+
+    .prototype-note-card.active {
+      border-color: #d89a00;
+      background: #fff8df;
+    }
+
+    .prototype-note-number,
+    .prototype-note-anchor {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: inline-grid;
+      place-items: center;
+      background: #ffd666;
+      border: 1px solid #d89a00;
+      color: #5d4100;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      flex: 0 0 auto;
+    }
+
+    .prototype-note-copy {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .prototype-note-copy strong {
+      color: var(--el-text-color-primary);
+      font-size: 13px;
+      line-height: 18px;
+    }
+
+    .prototype-note-copy span {
+      color: var(--el-text-color-secondary);
+      font-size: 12px;
+      line-height: 18px;
+    }
+
+    .prototype-note-copy p {
+      margin: 0;
+      color: var(--el-text-color-regular);
+      font-size: 13px;
+      line-height: 20px;
+    }
+
+    .prototype-note-host {
+      position: relative !important;
+    }
+
+    .prototype-note-anchor {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 6;
+      padding: 0;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(90, 64, 0, .16);
+    }
+
+    .prototype-note-target-active {
+      outline: 2px solid #f5b400;
+      outline-offset: 3px;
+      box-shadow: 0 0 0 4px rgba(245, 180, 0, .12);
+    }
+
+    .prototype-annotation-empty {
+      border: 1px dashed #e5c76e;
+      border-radius: var(--radius);
+      padding: 12px;
+      color: #8a6d18;
+      background: #fffaf0;
+      font-size: 13px;
+      line-height: 20px;
+    }
+
+    .prototype-annotation-toggle {
+      position: fixed;
+      right: 16px;
+      bottom: 18px;
+      z-index: 151;
+      min-width: 96px;
+      box-shadow: 0 8px 20px rgba(48, 49, 51, .16);
+      border-color: #d89a00;
+      color: #5d4100;
+      background: #ffd666;
+    }
+
+    body.annotation-open .prototype-annotation-toggle {
+      display: none;
+    }
+
+    .hide {
+      display: none !important;
+    }
+
+    .condition-toolbar.locked {
+      display: none;
+    }
+
+    @media (max-width: 1280px) {
+      #createView.view.active .wizard {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      #createView.view.active .preview {
+        position: static;
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .wizard,
+      .rule-layout,
+      .lookup-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        position: static;
+      }
+
+      .object-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .form-grid,
+      .source-grid,
+      .authorization-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 760px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .aside {
+        min-height: auto;
+        position: static;
+      }
+
+      .brand {
+        height: 54px;
+      }
+
+      .menu {
+        display: flex;
+        overflow-x: auto;
+        padding: 0 8px 8px;
+      }
+
+      .menu-group-title {
+        display: none;
+      }
+
+      .menu-item {
+        height: 36px;
+        border-left: 0;
+        border-bottom: 2px solid transparent;
+        padding: 0 10px;
+      }
+
+      .menu-item.active {
+        border-bottom-color: var(--el-color-primary);
+      }
+
+      .header {
+        padding: 0 12px;
+      }
+
+      .main {
+        padding: 12px;
+      }
+
+      .page-head {
+        display: grid;
+      }
+
+      .tabs {
+        overflow-x: auto;
+        padding: 0 12px;
+      }
+
+      .object-grid,
+      .form-grid,
+      .scenario[data-scenario="rn"] .form-grid,
+      .impact-grid,
+      .source-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .metric-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .authorization-summary {
+        grid-template-columns: 1fr;
+      }
+
+      .field,
+      .field.wide {
+        min-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="aside">
+      <div class="brand">
+        <div class="brand-mark">IoT</div>
+        <div class="brand-text">
+          <div class="brand-title">Cozy Power</div>
+          <div class="brand-subtitle">IoT Admin</div>
+        </div>
+      </div>
+      <nav class="menu" aria-label="主导航">
+        <div class="menu-group-title">概览</div>
+        <div class="menu-item"><span class="menu-dot"></span>概览</div>
+        <div class="menu-group-title">智能产品</div>
+        <div class="menu-item"><span class="menu-dot"></span>产品列表</div>
+        <div class="menu-item"><span class="menu-dot"></span>消息推送</div>
+        <div class="menu-group-title">设备管理</div>
+        <div class="menu-item"><span class="menu-dot"></span>设备列表</div>
+        <div class="menu-item"><span class="menu-dot"></span>固件管理</div>
+        <div class="menu-item" data-module="otaMenu"><span class="menu-dot"></span>OTA 策略</div>
+        <div class="menu-group-title">App</div>
+        <div class="menu-item"><span class="menu-dot"></span>扩展程序管理</div>
+        <div class="menu-group-title">运营管理</div>
+        <div class="menu-item"><span class="menu-dot"></span>兑换码</div>
+        <div class="menu-item" data-module="whitelistMenu"><span class="menu-dot"></span>白名单资产</div>
+        <div class="menu-item active" data-module="provisionMenu"><span class="menu-dot"></span>配网入口策略</div>
+        <div class="menu-item" data-module="abMenu"><span class="menu-dot"></span>AB test 策略</div>
+      </nav>
+    </aside>
+
+    <div class="shell">
+      <header class="header">
+        <div class="breadcrumb">
+          <span id="breadcrumbRoot">运营管理</span>
+          <span>/</span>
+          <strong id="breadcrumbCurrent">配网入口策略</strong>
+        </div>
+        <div class="userbar">
+          <span>测试数据中心</span>
+          <span class="avatar">A</span>
+          <span>Admin</span>
+        </div>
+      </header>
+
+      <main class="main">
+        <div class="page-head">
+          <div>
+            <h1 id="pageTitle">配网入口策略</h1>
+            <p class="page-desc" id="pageDesc">管理开发中产品白名单试用和已上架产品 GTM 上架范围；用户名单来自独立白名单资产。</p>
+          </div>
+          <div class="toolbar" id="pageActions">
+            <button class="btn" id="openImpactDemo">关联页面示意</button>
+            <button class="btn primary" id="newStrategyTop">新增配网入口策略</button>
+          </div>
+        </div>
+
+        <div class="panel" id="workspaceTabsPanel">
+          <div class="tabs" role="tablist">
+            <button class="tab active" data-view="listView">策略列表</button>
+          </div>
+        </div>
+
+        <section id="listView" class="view active">
+          <div class="panel">
+            <div class="panel-body">
+              <div class="filter-form">
+                <div class="field" id="filterTypeField">
+                  <label for="filterType">策略类型</label>
+                  <select id="filterType"></select>
+                </div>
+                <div class="field" id="filterDcField">
+                  <label for="filterDc">数据中心</label>
+                  <select id="filterDc">
+                    <option>全部数据中心</option>
+                    <option>北美数据中心</option>
+                    <option>欧洲数据中心</option>
+                    <option>亚太数据中心</option>
+                    <option>中国数据中心</option>
+                  </select>
+                </div>
+                <div class="field" id="filterProductField">
+                  <label for="filterProduct">产品</label>
+                  <select id="filterProduct"><option>全部产品</option></select>
+                </div>
+                <div class="field" id="filterProductStateField">
+                  <label for="filterProductState">产品状态</label>
+                  <select id="filterProductState">
+                    <option>全部状态</option>
+                    <option>开发中</option>
+                    <option>已上架-部分放开</option>
+                    <option>已上架-全面放开</option>
+                    <option>已下架</option>
+                  </select>
+                </div>
+                <div class="field" id="filterOwnerField">
+                  <label for="filterOwner">负责人</label>
+                  <select id="filterOwner"><option>全部负责人</option></select>
+                </div>
+                <div class="field wide" id="filterKeywordField">
+                  <label for="filterKeyword">产品 / 策略名称</label>
+                  <input id="filterKeyword" placeholder="输入产品名称或策略名称">
+                </div>
+                <div class="field small" id="filterStatusField">
+                  <label for="filterStatus">状态</label>
+                  <select id="filterStatus">
+                    <option>全部</option>
+                    <option>草稿</option>
+                    <option>待发布</option>
+                    <option>运行中</option>
+                    <option>暂停</option>
+                    <option>自动暂停</option>
+                    <option>已结束</option>
+                    <option>已过期</option>
+                  </select>
+                </div>
+                <button class="btn primary" id="queryList">查询</button>
+                <button class="btn" id="resetList">重置</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>策略名称</th>
+                    <th>发布对象</th>
+                    <th>产品 / 状态</th>
+                    <th>受众和范围</th>
+                    <th>版本 / 变体</th>
+                    <th>风险状态</th>
+                    <th>开始时间</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody id="strategyRows"></tbody>
+              </table>
+            </div>
+            <div class="pagination" id="strategyPagination"></div>
+          </div>
+        </section>
+
+        <section id="createView" class="view">
+          <div class="drawer-form-header">
+            <div class="drawer-title" id="createDrawerTitle">新建策略</div>
+            <button class="btn" id="closeCreateDrawer">关闭</button>
+          </div>
+          <div class="wizard">
+            <div class="panel">
+              <div class="panel-body">
+                <h2 class="section-title" id="objectSectionTitle" data-step="1">策略类型和基础信息</h2>
+                <div class="object-grid">
+                  <button class="object-card active" data-object="provision">
+                    <h3>配网入口</h3>
+                    <p>仅开发中产品；只支持白名单 beta / 种子用户试用。</p>
+                    <span class="tag green">白名单</span>
+                  </button>
+                  <button class="object-card" data-object="gtm">
+                    <h3>GTM 上架</h3>
+                    <p>开发中产品部分区域上架；可逐步扩大或全面放开。</p>
+                    <span class="tag blue">部分放开</span>
+                  </button>
+                  <button class="object-card" data-object="ota">
+                    <h3>OTA 版本</h3>
+                    <p>已上架产品；现有 OTA 任务统一转换为策略记录。</p>
+                    <span class="tag orange">安全阈值</span>
+                  </button>
+                  <button class="object-card" data-object="rn">
+                    <h3>RN 面板</h3>
+                    <p>开发中白名单；已上架白名单或普通用户 AB 二选一。</p>
+                    <span class="tag blue">设备分桶</span>
+                  </button>
+                </div>
+
+                <div class="form-grid">
+                  <div class="field">
+                    <label for="strategyName">策略名称</label>
+                    <input id="strategyName" value="Pump-H RN 面板 A/B 验证">
+                  </div>
+                  <div class="field">
+                    <label for="productSelect">产品</label>
+                    <select id="productSelect">
+                      <option value="pump">Pump-H / 已上架-全面放开 / RN</option>
+                      <option value="thermo">12 / 已上架-部分放开 / RN</option>
+                      <option value="dev">V3 Dev Pump / 开发中 / RN</option>
+                      <option value="native">Legacy Warmer / 已上架-全面放开 / 原生</option>
+                      <option value="off">Old Pump / 已下架 / RN</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="dcSelect" id="scopeLabel">资源数据中心</label>
+                    <select id="dcSelect">
+                      <option>北美数据中心</option>
+                      <option>欧洲数据中心</option>
+                      <option>亚太数据中心</option>
+                      <option>中国数据中心</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div id="resourceSourcePanel" class="subpanel" style="margin-top: 16px;"></div>
+
+                <div class="scenario" data-scenario="rn">
+                  <div class="rule-layout">
+                    <div class="subpanel">
+                      <h3 data-step="3">受众模式</h3>
+                      <div class="segmented" id="audienceMode">
+                        <button class="active" data-mode="normal">普通用户 AB</button>
+                        <button data-mode="whitelist">白名单测试</button>
+                      </div>
+                      <div class="alert warning">已上架产品中，白名单测试与普通用户 AB 必须二选一；开发中产品只允许白名单测试。</div>
+                    </div>
+                    <div class="subpanel">
+                      <h3>RN 面板资源</h3>
+                      <div class="form-grid">
+                        <div class="field">
+                          <label for="panelCode">PanelCode</label>
+                          <select id="panelCode">
+                            <option>morn.breast-pump.v3</option>
+                            <option>morn.breast-pump.v2</option>
+                          </select>
+                        </div>
+                        <div class="field">
+                          <label for="variantA">变体 A</label>
+                          <select id="variantA">
+                            <option>当前最新版本 1.0.0</option>
+                            <option>开发中版本 1.1.0 Beta</option>
+                          </select>
+                        </div>
+                        <div class="field">
+                          <label for="variantB">变体 B</label>
+                          <select id="variantB">
+                            <option>开发中版本 1.1.0 Beta</option>
+                            <option>当前最新版本 1.0.0</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div class="alert">资源来源：扩展程序管理-版本；变体可选当前最新版本和其他开发中版本。命中只代表可更新资格，App 仍可能使用缓存版本。</div>
+                    </div>
+                  </div>
+                  <div class="rule-layout">
+                    <div class="subpanel">
+                      <h3>设备分桶、用户比例和流量上限</h3>
+                      <div class="form-grid">
+                        <div class="field">
+                          <label for="bucketRatio">用户比例</label>
+                          <select id="bucketRatio">
+                            <option>A 50% / B 50%</option>
+                            <option>A 80% / B 20%</option>
+                            <option>A 20% / B 80%</option>
+                          </select>
+                        </div>
+                        <div class="field" id="trafficCapField">
+                          <label for="trafficCap">流量上限</label>
+                          <select id="trafficCap">
+                            <option>最多 10% 可触达设备 / 1,000 台</option>
+                            <option>最多 20% 可触达设备 / 2,000 台</option>
+                            <option>不限制，按用户比例全量分桶</option>
+                          </select>
+                        </div>
+                        <div class="field" id="alphaOverrideField">
+                          <label for="alphaOverride">alpha 用户版本指定</label>
+                          <select id="alphaOverride">
+                            <option>跟随策略默认命中</option>
+                            <option>指定变体 A</option>
+                            <option>指定变体 B</option>
+                          </select>
+                        </div>
+                        <div class="field">
+                          <label for="expireAt">有效期</label>
+                          <input id="expireAt" value="2026-06-30 23:59">
+                        </div>
+                      </div>
+                      <div class="alert">普通用户 AB 先按流量上限圈定进入实验的设备，再在命中设备内按用户比例分配 A/B；绑定用户与共享用户命中不一致时，以设备绑定关系或设备稳定分桶结果为准。</div>
+                    </div>
+                    <div class="subpanel">
+                      <h3>实验标识</h3>
+                      <div class="detail-list">
+                        <dt>实验 ID</dt><dd>EXP-RN-PUMP-H-202605</dd>
+                        <dt>变体 ID</dt><dd>A: panel_v1_stable / B: panel_v1_1_beta</dd>
+                        <dt>统计口径</dt><dd>alpha 覆盖不计入普通用户 AB 流量</dd>
+                        <dt>流量上限</dt><dd id="trafficCapPreview">最多 10% 可触达设备 / 1,000 台</dd>
+                        <dt>用户比例</dt><dd id="bucketRatioPreview">A 50% / B 50%</dd>
+                        <dt>到期关闭</dt><dd><select id="expirePolicy" class="inline-select"><option>收敛到 A</option><option>收敛到 B</option><option>保持所在版本</option></select></dd>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="scenario" data-scenario="ota">
+                  <div class="rule-layout ota-config-layout">
+                    <div class="subpanel">
+                      <h3 data-step="3">固件和发布地区</h3>
+                      <div class="compact-form-grid">
+                        <div class="field">
+                          <label>目标固件</label>
+                          <select>
+                            <option>FW 1.2.0 / M9P0</option>
+                            <option>FW 1.1.8 / M9P0</option>
+                          </select>
+                        </div>
+                        <div class="field">
+                          <label>发布地区</label>
+                          <div class="multi-check-grid" id="otaRegionSelector">
+                            <label class="multi-check-item"><input type="checkbox" data-ota-region="北美" checked> 北美</label>
+                            <label class="multi-check-item"><input type="checkbox" data-ota-region="欧洲" checked> 欧洲</label>
+                            <label class="multi-check-item"><input type="checkbox" data-ota-region="亚太"> 亚太</label>
+                            <label class="multi-check-item"><input type="checkbox" data-ota-region="中国"> 中国</label>
+                          </div>
+                          <div class="selection-summary" id="otaRegionSummary">已选择：北美、欧洲</div>
+                        </div>
+                      </div>
+                      <div class="alert warning">不再配置独立数据中心字段。发布地区由策略维护，可多区域发布。</div>
+                    </div>
+                    <div class="subpanel">
+                      <h3>安全阈值</h3>
+                      <div class="threshold-grid">
+                        <div class="field"><label>失败率阈值</label><input value="3%"></div>
+                        <div class="field"><label>成功率阈值</label><input value="96%"></div>
+                        <div class="field"><label>下载峰值保护</label><input value="1200 req/min"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="subpanel" style="margin-top: 16px;">
+                    <h3>命中过滤条件配置</h3>
+                    <div class="detail-list">
+                      <dt>白名单</dt><dd>选择白名单用户，用户可以发现新版本固件</dd>
+                      <dt>设备列表</dt><dd>选择指定设备，设备绑定用户可以发现新版本固件</dd>
+                      <dt>分批比例</dt><dd>按比例批次执行 OTA，可选择限制或不限制单批上线台数</dd>
+                      <dt>地区</dt><dd>按数据中心或国家/地区选择 OTA 范围，地区模式切换后配置项同步切换</dd>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="scenario active" data-scenario="provision">
+                  <div class="subpanel">
+                    <h3 data-step="3">配网入口白名单</h3>
+                    <div class="detail-list">
+                      <dt>适用状态</dt><dd>仅开发中产品</dd>
+                      <dt>受众来源</dt><dd>运营管理 > 白名单资产 / 标签组</dd>
+                      <dt>授权对象</dt><dd>选择白名单中的 beta 用户或 beta 标签组；alpha 内部测试人员默认具备测试授权，不在本策略重复配置</dd>
+                      <dt>不支持</dt><dd>用户比例、GTM 地区发布、AB test</dd>
+                    </div>
+                    <div class="alert">旧产品测试白名单能力迁移为“开发中产品 + 配网入口 + 白名单”策略。</div>
+                  </div>
+                </div>
+
+                <div class="scenario" data-scenario="gtm">
+                  <div class="subpanel">
+                    <h3 data-step="3">GTM 上架范围</h3>
+                    <div class="form-grid">
+                      <div class="field">
+                        <label for="gtmReleaseMode">放开方式</label>
+                        <select id="gtmReleaseMode">
+                          <option>部分放开</option>
+                          <option>全面放开</option>
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label>范围模式</label>
+                        <select id="gtmRangeMode">
+                          <option>国家/地区</option>
+                          <option>数据中心</option>
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label>当前动作</label>
+                        <div class="readonly-field" id="gtmDrawerAction">新建策略</div>
+                      </div>
+                    </div>
+                    <div class="rule-layout">
+                      <div class="subpanel" id="gtmCountryPanel">
+                        <h3>国家/地区复选</h3>
+                        <div class="tree-list">
+                          <label class="tree-item"><input type="checkbox" checked> 亚洲</label>
+                          <label class="tree-item tree-child"><input type="checkbox" disabled> 日本（已被亚洲覆盖）</label>
+                          <label class="tree-item tree-child"><input type="checkbox" disabled> 新加坡（已被亚洲覆盖）</label>
+                          <label class="tree-item"><input type="checkbox" checked> 美国</label>
+                          <label class="tree-item"><input type="checkbox"> 加拿大</label>
+                          <label class="tree-item"><input type="checkbox"> 欧洲</label>
+                        </div>
+                      </div>
+                      <div class="subpanel hide" id="gtmDcPanel">
+                        <h3>数据中心多选</h3>
+                        <label class="tree-item"><input type="checkbox" checked> 北美数据中心</label>
+                        <label class="tree-item"><input type="checkbox"> 欧洲数据中心</label>
+                        <label class="tree-item"><input type="checkbox"> 亚太数据中心</label>
+                        <label class="tree-item"><input type="checkbox"> 中国数据中心</label>
+                        <div class="disabled-note">选择“全面放开”时，此处无需配置，范围配置整体失效。</div>
+                      </div>
+                    </div>
+                    <div class="alert">GTM 上架策略仅能新建给开发中产品。已上架-部分放开的产品说明已有 GTM 策略，应进入对应策略详情后编辑；编辑态会回显当前放开范围。</div>
+                  </div>
+                </div>
+
+                <div class="rule-layout condition-layout" id="conditionRuleLayout">
+                  <div class="subpanel" id="conditionPanel">
+                    <h3 id="conditionSectionTitle" data-step="4">命中条件配置</h3>
+                    <div class="toolbar condition-toolbar" id="conditionToolbar" style="justify-content: space-between;">
+                      <div>
+                        <label>条件逻辑</label>
+                        <div class="segmented" id="logicToggle" style="margin-left: 8px;">
+                          <button class="active" data-logic="AND">AND</button>
+                          <button data-logic="OR">OR</button>
+                        </div>
+                      </div>
+                      <span class="subline">同一条件类型最多出现一次</span>
+                    </div>
+                    <div id="conditionList"></div>
+                    <div class="add-condition" id="addConditionBox">
+                      <select id="conditionSelect">
+                      </select>
+                      <button class="btn" id="addCondition">添加条件</button>
+                    </div>
+                    <div class="alert danger hide" id="duplicateAlert">该条件类型已存在或不适用于当前发布对象，请在当前对象允许的配置区修改。</div>
+                    <div class="disabled-note" id="conditionPolicyNote"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <aside class="panel preview">
+              <div class="panel-body">
+                <h2 class="section-title" id="previewTitle" data-step="5">发布校验与影响预览</h2>
+                <div id="conflictBox" class="alert success">暂无阻塞冲突。保存前将再次校验产品状态、受众二选一、OTA 地区边界和重复条件。</div>
+                <div id="previewSummary" class="alert success">RN 面板普通用户 AB：北美数据中心，预计 8,420 台设备进入稳定分桶。</div>
+                <div class="metric-grid">
+                  <div class="metric"><div class="metric-value" id="metricUsers">12,860</div><div class="metric-label">可触达用户</div></div>
+                  <div class="metric"><div class="metric-value" id="metricDevices">8,420</div><div class="metric-label">命中设备</div></div>
+                  <div class="metric"><div class="metric-value" id="metricRisk">0</div><div class="metric-label">阻塞冲突</div></div>
+                  <div class="metric"><div class="metric-value" id="metricPolicy">通过</div><div class="metric-label">状态校验</div></div>
+                </div>
+                <div class="operation-scope" id="operationScope"></div>
+                <div class="alert" id="explainBox">命中解释：设备 D 命中变体 A 后，共享用户查看同一设备仍使用 A。alpha 版本指定会标记为测试覆盖。</div>
+                <div class="state-action-bar" id="stateActionBar"></div>
+                <div class="confirm-toolbar">
+                  <button class="btn" id="saveDraftButton">保存草稿</button>
+                  <button class="btn primary" id="publishButton">发布策略</button>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section id="whitelistView" class="view">
+          <div class="panel">
+            <div class="panel-body">
+              <div class="page-head">
+                <div>
+                  <h2 class="section-title">白名单资产</h2>
+                  <p class="page-desc">原 App > 白名单管理迁移为独立受众资产入口，供配网入口策略、OTA 策略和 AB test 策略复用。</p>
+                </div>
+                <div class="toolbar">
+                  <button class="btn primary" id="whitelistAddUser">新增用户</button>
+                  <button class="btn" id="whitelistImportDemo">批量导入用户</button>
+                </div>
+              </div>
+              <div class="filter-form" style="margin-top: 12px;">
+                <div class="field">
+                  <label for="whitelistFilterDc">数据中心</label>
+                  <select id="whitelistFilterDc">
+                    <option>全部</option>
+                    <option>北美数据中心</option>
+                    <option>欧洲数据中心</option>
+                    <option>亚太数据中心</option>
+                    <option>中国数据中心</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="whitelistFilterType">用户类型</label>
+                  <select id="whitelistFilterType">
+                    <option>全部</option>
+                    <option value="alpha">alpha 内部测试</option>
+                    <option value="beta">beta 种子用户</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="whitelistFilterTag">标签组</label>
+                  <select id="whitelistFilterTag">
+                    <option>全部标签组</option>
+                    <option>Seed NA 2026Q2</option>
+                    <option>Seed EU 2026Q2</option>
+                    <option>Internal QA</option>
+                    <option>OTA Seed Users</option>
+                  </select>
+                </div>
+                <div class="field wide">
+                  <label for="whitelistFilterKeyword">用户邮箱 / 昵称</label>
+                  <input id="whitelistFilterKeyword" placeholder="输入用户邮箱或昵称">
+                </div>
+                <button class="btn primary" id="queryWhitelist">查询</button>
+                <button class="btn" id="resetWhitelist">重置</button>
+              </div>
+              <div class="disabled-note">账号唯一性按“邮箱 + 数据中心”判断；昵称为选填，不参与唯一性判断。白名单用户是平台自身数据，不要求账号已在 App 侧注册。</div>
+              <div class="batch-bar">
+                <span>勾选用户后可批量编辑类型或删除</span>
+                <select class="inline-select" id="batchTypeSelect">
+                  <option value="beta">设为 beta / 种子用户</option>
+                  <option value="alpha">设为 alpha / 内部测试</option>
+                </select>
+                <button class="btn" id="applyBatchType">应用到已选</button>
+                <button class="btn danger" id="deleteSelectedWhitelist">删除已选</button>
+                <span class="selection-count" id="whitelistSelectedSummary">跨页已选 0 人</span>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th><input type="checkbox" id="selectAllWhitelist"></th>
+                    <th>用户</th>
+                    <th>类型</th>
+                    <th>数据中心</th>
+                    <th>标签组</th>
+                    <th>授权策略</th>
+                    <th>操作</th>
+                    <th>引用到策略</th>
+                  </tr>
+                </thead>
+                <tbody id="whitelistAssetRows"></tbody>
+              </table>
+            </div>
+            <div class="pagination" id="whitelistPagination"></div>
+          </div>
+        </section>
+
+        <section id="whitelistDetailView" class="view">
+          <div class="panel">
+            <div class="panel-body">
+              <div class="page-head">
+                <div>
+                  <h2 class="section-title" id="whitelistDetailTitle">白名单授权详情</h2>
+                  <p class="page-desc">仅反查白名单用户被哪些策略授权；普通用户命中 AB test 等运行结果在对应策略列表中查看。</p>
+                </div>
+                <div class="toolbar">
+                  <button class="btn" id="backToWhitelistList">返回白名单列表</button>
+                </div>
+              </div>
+              <div class="authorization-summary" id="whitelistDetailSummary"></div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>授权策略</th>
+                    <th>策略类型</th>
+                    <th>产品 / 版本</th>
+                    <th>授权来源</th>
+                    <th>状态</th>
+                    <th>有效期</th>
+                    <th>查看</th>
+                  </tr>
+                </thead>
+                <tbody id="whitelistAuthorizationRows"></tbody>
+              </table>
+            </div>
+            <div class="pagination" id="whitelistAuthorizationPagination"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast hide" id="toast">发布策略成功，已更新策略列表。</div>
+
+  <aside class="prototype-annotation-panel" id="prototypeAnnotationPanel" aria-label="原型批注">
+    <div class="prototype-annotation-head">
+      <div class="prototype-annotation-title">
+        <span>原型批注</span>
+        <button class="btn link" id="closePrototypeAnnotations">收起</button>
+      </div>
+      <div class="prototype-annotation-caption" id="prototypeAnnotationContext">黄色编号是批注锚点，不属于真实 IoT Admin 页面。</div>
+    </div>
+    <div class="prototype-annotation-list" id="prototypeAnnotationList"></div>
+  </aside>
+  <button class="btn prototype-annotation-toggle" id="openPrototypeAnnotations">查看批注</button>
+
+  <div class="drawer-mask" id="drawerMask" aria-hidden="true">
+    <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+      <div class="drawer-header">
+        <div class="drawer-title" id="drawerTitle">策略详情</div>
+        <button class="btn link" id="closeDrawer">关闭</button>
+      </div>
+      <div class="drawer-body" id="drawerBody"></div>
+      <div class="drawer-footer">
+        <button class="btn" id="drawerSecondary">关闭</button>
+        <button class="btn primary" id="drawerPrimary">编辑</button>
+      </div>
+    </aside>
+  </div>
+
+  <div class="modal-mask" id="progressMask" aria-hidden="true">
+    <div class="modal-card">
+      <div class="drawer-title">导入处理中</div>
+      <div class="progress-track"><div class="progress-bar"></div></div>
+      <div class="alert warning">系统正在同步解析并写入白名单资产，处理完成前不可离开。</div>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="deleteWhitelistMask" aria-hidden="true">
+    <div class="modal-card">
+      <div class="drawer-title" id="deleteWhitelistTitle">删除白名单用户</div>
+      <div class="delete-user-summary" id="deleteWhitelistSummary"></div>
+      <div class="alert warning" id="deleteWhitelistImpact">删除后该用户将不再通过白名单资产命中配网入口、OTA 或 AB test 策略。</div>
+      <div class="confirm-toolbar">
+        <button class="btn" id="cancelWhitelistDelete">取消</button>
+        <button class="btn danger" id="confirmWhitelistDelete">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const strategies = [
+      {
+        name: "Pump-H RN 面板 A/B 验证",
+        type: "RN 面板",
+        product: "Pump-H",
+        productState: "已上架-全面放开",
+        audience: "普通用户 AB；设备分桶；alpha 可指定 A/B",
+        version: "A: 1.0.0 / B: 1.1.0",
+        risk: "运行中",
+        riskTag: "green",
+        start: "2026-05-22 10:00",
+        detail: {
+          "实验 ID": "EXP-RN-PUMP-H-202605",
+          "控制面板": "RN，资源来自扩展程序管理 / 产品模块",
+          "共享规则": "绑定用户命中 A，共享用户命中 B 时，设备最终使用 A",
+          "测试覆盖": "alpha 用户可指定 A、B 或跟随默认命中"
+        }
+      },
+      {
+        name: "Pump-H OTA 1.2.0 北美灰度",
+        type: "OTA",
+        product: "Pump-H",
+        productState: "已上架-全面放开",
+        audience: "OTA 发布地区北美、欧洲 AND beta 标签组",
+        version: "FW 1.2.0 / M9P0",
+        risk: "自动暂停",
+        riskTag: "red",
+        start: "2026-05-21 18:00",
+        detail: {
+          "OTA 发布地区": "北美、欧洲",
+          "策略条件": "beta 标签组 AND 设备列表",
+          "分批配置": "每批 10%，单批上线台数限制 1,000 台",
+          "安全阈值": "失败率 3%，成功率 96%，下载峰值 1200 req/min",
+          "暂停原因": "失败率达到阈值，未继续扩大灰度"
+        }
+      },
+      {
+        name: "V3 种子用户配网入口",
+        type: "配网入口",
+        product: "V3 Dev Pump",
+        productState: "开发中",
+        audience: "来自白名单资产：beta 种子用户 / 北美数据中心",
+        version: "配网入口可见",
+        risk: "运行中",
+        riskTag: "green",
+        start: "2026-05-20 09:30",
+        detail: {
+          "适用范围": "仅开发中产品",
+          "数据来源": "运营管理 > 白名单资产，字段：用户类型 beta、数据中心、标签组、账号",
+          "授权口径": "beta 用户对应种子用户；alpha 内部测试人员默认具备测试授权",
+          "迁移关系": "旧产品测试白名单迁移为配网入口发布策略",
+          "不支持项": "用户比例、GTM 地区发布、AB test"
+        }
+      },
+      {
+        name: "Thermo 新品美国部分上架",
+        type: "GTM",
+        product: "12",
+        productState: "已上架-部分放开",
+        audience: "国家/地区：美国、加拿大",
+        version: "配网入口商业化可见",
+        risk: "运行中",
+        riskTag: "green",
+        start: "2026-05-24 08:00",
+        detail: {
+          "触发方式": "GTM 策略选择开发中产品并发布",
+          "上架范围": "部分放开",
+          "判断字段": "设备最近一次连接 IP 所属国家/地区",
+          "后续动作": "支持修改区域或一键全面放开"
+        }
+      }
+    ];
+
+    const strategyStates = {
+      "草稿": { tag: "orange", actions: ["发布", "编辑", "删除"] },
+      "待发布": { tag: "blue", actions: ["编辑", "取消发布"] },
+      "运行中": { tag: "green", actions: ["编辑", "暂停", "结束"] },
+      "暂停": { tag: "orange", actions: ["编辑", "恢复", "结束"] },
+      "自动暂停": { tag: "red", actions: ["编辑", "恢复", "结束"] },
+      "已结束": { tag: "", actions: ["编辑", "复制"] },
+      "已过期": { tag: "", actions: ["编辑", "复制"] }
+    };
+
+    const productOptions = {
+      provision: [
+        { value: "dev", label: "V3 Dev Pump / 开发中 / RN" }
+      ],
+      gtm: [
+        { value: "dev", label: "V3 Dev Pump / 开发中 / RN" },
+        { value: "thermo", label: "12 / 已上架-部分放开 / RN（已有 GTM，演示冲突）" }
+      ],
+      ota: [
+        { value: "pump", label: "Pump-H / 已上架-全面放开 / RN" },
+        { value: "thermo", label: "12 / 已上架-部分放开 / RN" }
+      ],
+      rn: [
+        { value: "pump", label: "Pump-H / 已上架-全面放开 / RN" },
+        { value: "thermo", label: "12 / 已上架-部分放开 / RN" },
+        { value: "dev", label: "V3 Dev Pump / 开发中 / RN" },
+        { value: "native", label: "Legacy Warmer / 已上架-全面放开 / 原生" }
+      ]
+    };
+
+    const whitelistUsers = [
+      {
+        id: "u-10021",
+        account: "seed.user@example.com",
+        nickname: "Seed User NA",
+        type: "beta",
+        dc: "北美数据中心",
+        tag: "Seed NA 2026Q2",
+        checked: true,
+        policies: [
+          { name: "V3 种子用户配网入口", type: "配网入口", product: "V3 Dev Pump / 配网入口可见", source: "标签组 Seed NA 2026Q2", status: "运行中", tagClass: "green", expire: "2026-06-30 23:59" },
+          { name: "Pump-H OTA 1.2.0 北美灰度", type: "OTA", product: "Pump-H / FW 1.2.0", source: "beta 白名单用户", status: "自动暂停", tagClass: "red", expire: "2026-06-15 23:59" },
+          { name: "Pump-H RN 白名单体验", type: "AB test", product: "Pump-H / RN 1.1.0 Beta", source: "白名单测试", status: "运行中", tagClass: "green", expire: "2026-06-30 23:59" }
+        ]
+      },
+      {
+        id: "u-10022",
+        account: "mother.panel@example.com",
+        nickname: "Panel Mother",
+        type: "beta",
+        dc: "北美数据中心",
+        tag: "Seed NA 2026Q2",
+        checked: true,
+        policies: [
+          { name: "V3 种子用户配网入口", type: "配网入口", product: "V3 Dev Pump / 配网入口可见", source: "标签组 Seed NA 2026Q2", status: "运行中", tagClass: "green", expire: "2026-06-30 23:59" },
+          { name: "Pump-H RN 白名单体验", type: "AB test", product: "Pump-H / RN 1.1.0 Beta", source: "白名单测试", status: "运行中", tagClass: "green", expire: "2026-06-30 23:59" }
+        ]
+      },
+      {
+        id: "u-10024",
+        account: "seed.user@example.com",
+        nickname: "Seed User EU",
+        type: "beta",
+        dc: "欧洲数据中心",
+        tag: "Seed EU 2026Q2",
+        checked: false,
+        policies: [
+          { name: "Pump-H OTA 1.2.0 欧洲灰度", type: "OTA", product: "Pump-H / FW 1.2.0", source: "欧洲数据中心 beta 白名单用户", status: "运行中", tagClass: "green", expire: "2026-06-15 23:59" }
+        ]
+      },
+      {
+        id: "u-10023",
+        account: "qa.alpha@example.com",
+        nickname: "QA Alpha",
+        type: "alpha",
+        dc: "北美数据中心",
+        tag: "Internal QA",
+        checked: true,
+        policies: [
+          { name: "系统默认测试授权", type: "配网入口", product: "全部测试范围 / 有效期内", source: "alpha 用户类型", status: "默认授权", tagClass: "orange", expire: "2026-06-30 23:59" },
+          { name: "RN A/B 测试覆盖", type: "AB test", product: "Pump-H / A 或 B 指定", source: "alpha 版本覆盖", status: "可切换", tagClass: "orange", expire: "2026-06-30 23:59" }
+        ]
+      }
+    ];
+
+    const batchImportStats = { total: 100, existing: 82, fresh: 18, alpha: 3 };
+    const batchImportExistingAccounts = new Set(["seed.user@example.com@@北美数据中心", "mother.panel@example.com@@北美数据中心"]);
+    const batchImportNewUsers = [
+      { id: "import-001", account: "trial.new001@example.com", type: "beta", dc: "北美数据中心", tag: "批量导入 2026-05-25", checked: true, policies: [] },
+      { id: "import-002", account: "trial.new002@example.com", type: "beta", dc: "北美数据中心", tag: "批量导入 2026-05-25", checked: true, policies: [] },
+      { id: "import-018", account: "trial.new018@example.com", type: "beta", dc: "北美数据中心", tag: "批量导入 2026-05-25", checked: true, policies: [] }
+    ];
+
+    const objectConditionConfig = {
+      provision: {
+        defaultConditions: ["白名单"],
+        options: ["白名单"],
+        note: "配网入口基于 App 用户账号授权，只允许选择白名单用户或标签组。alpha 内部测试人员默认具备测试授权，不作为命中过滤条件；设备列表、用户比例、国家/地区均不适用。",
+        logicEnabled: false,
+        addEnabled: false,
+        removable: false
+      },
+      gtm: {
+        defaultConditions: [],
+        options: [],
+        note: "GTM 的上架范围就是命中范围，通过“判断方式 + 上架区域”配置，不再额外叠加命中过滤条件，避免和数据中心/国家地区重复。",
+        logicEnabled: false,
+        addEnabled: false,
+        removable: false
+      },
+      ota: {
+        defaultConditions: ["白名单", "设备列表", "分批比例"],
+        options: ["白名单", "设备列表", "分批比例", "地区"],
+        note: "OTA 策略可配置发布地区，并通过白名单、设备列表、分批比例、地区继续收敛。每个条件都需要配置具体值。",
+        logicEnabled: true,
+        addEnabled: true,
+        removable: true
+      },
+      rn: {
+        defaultConditions: [],
+        options: [],
+        note: "AB test 不使用额外命中条件；受众模式决定用户范围，先按流量上限圈定实验设备，再按用户比例和设备稳定分桶分发变体。",
+        logicEnabled: false,
+        addEnabled: false,
+        removable: false
+      }
+    };
+
+    const productState = {
+      pump: { label: "已上架-全面放开产品，控制面板实现方式为 RN，可创建 RN 面板或 OTA 策略；GTM 无需再扩大范围。", cls: "success", users: "12,860", devices: "8,420", risk: "0" },
+      thermo: { label: "已上架-部分放开产品，当前 GTM 范围为美国、加拿大；本次 GTM 操作需明确扩大、缩小或全面放开。", cls: "success", users: "4,300", devices: "2,910", risk: "0" },
+      dev: { label: "开发中产品：配网入口仅白名单；RN 面板仅白名单；GTM 可发布为已上架-部分放开。", cls: "warning", users: "126", devices: "58", risk: "0" },
+      native: { label: "当前产品控制面板实现方式为原生，不能选择动态 RN 面板资源进行 AB test。", cls: "danger", users: "0", devices: "0", risk: "1" },
+      off: { label: "已下架产品一般情况下不支持灰度发布、AB test、白名单等发布策略。", cls: "danger", users: "0", devices: "0", risk: "1" }
+    };
+
+    const menuModules = {
+      whitelistMenu: {
+        parent: "运营管理",
+        title: "白名单资产",
+        desc: "独立维护 alpha / beta 用户和标签组，供配网入口策略、OTA 策略、AB test 策略复用。",
+        newText: "批量导入用户",
+        objects: [],
+        types: [],
+        defaultObject: "provision",
+        assetOnly: true
+      },
+      provisionMenu: {
+        parent: "运营管理",
+        title: "配网入口策略",
+        desc: "管理开发中产品白名单试用和已上架产品 GTM 上架范围；用户名单来自独立白名单资产。",
+        newText: "新增配网入口策略",
+        objects: ["provision", "gtm"],
+        types: ["配网入口", "GTM"],
+        defaultObject: "provision"
+      },
+      otaMenu: {
+        parent: "设备管理",
+        title: "OTA 策略",
+        desc: "管理已上架产品固件白名单灰度、定向灰度和分批升级；现有 OTA 任务统一转换为策略记录。",
+        newText: "新增 OTA 策略",
+        objects: ["ota"],
+        types: ["OTA"],
+        defaultObject: "ota",
+        showWhitelist: false
+      },
+      abMenu: {
+        parent: "运营管理",
+        title: "AB test 策略",
+        desc: "管理 RN 面板白名单测试和普通用户 AB test；普通用户实验以设备为主体稳定分桶。",
+        newText: "新增 AB test 策略",
+        objects: ["rn"],
+        types: ["RN 面板"],
+        defaultObject: "rn",
+        showWhitelist: false
+      }
+    };
+
+    let currentModule = "provisionMenu";
+    let currentObject = "provision";
+    let conditionLogic = "AND";
+    let conditions = [...objectConditionConfig.provision.defaultConditions];
+    let rnAudienceMode = "normal";
+    let otaWhitelistMode = "tag";
+    let otaRegionConditionMode = "dataCenter";
+    let otaBatchLimitMode = "limited";
+    let importBatchParsed = false;
+    let importBatchContext = null;
+    let assetImportedUsers = [];
+    let strategyImportedUsers = [];
+    let selectedWhitelistId = "u-10021";
+    let strategyPage = 1;
+    const strategyPageSize = 1;
+    let whitelistPage = 1;
+    const whitelistPageSize = 3;
+    let strategyScopePage = 1;
+    let strategyScopeSearch = "";
+    let strategyScopeTag = "全部标签组";
+    const strategyScopePageSize = 2;
+    let whitelistAuthorizationPage = 1;
+    const whitelistAuthorizationPageSize = 2;
+    let drawerPrimaryAction = null;
+    let drawerSecondaryAction = null;
+    let editingStrategy = null;
+    let pendingWhitelistDeleteIds = [];
+    let annotationPanelOpen = true;
+    let activePrototypeAnnotationId = null;
+    let activeDrawerAnnotationContext = null;
+    let activeDrawerStrategyType = null;
+    let activeModalAnnotationContext = null;
+
+    const prototypeAnnotations = [
+      {
+        id: "asset-list-source",
+        module: "whitelistMenu",
+        view: "whitelistView",
+        target: "#whitelistView .page-head",
+        title: "白名单资产承接旧入口",
+        body: "原 App > 白名单管理迁移为运营管理 > 白名单资产。这里维护账号、昵称、用户类型、数据中心和标签组，供配网入口、OTA 和 AB test 复用。",
+        loc: "白名单资产页"
+      },
+      {
+        id: "asset-identity-rule",
+        module: "whitelistMenu",
+        view: "whitelistView",
+        target: "#whitelistView .disabled-note",
+        title: "账号唯一性口径",
+        body: "白名单用户按邮箱 + 数据中心唯一。昵称为选填，不参与唯一性判断；账号不需要先在 App 侧注册，注册后即可被白名单命中。",
+        loc: "白名单资产 > 唯一性说明"
+      },
+      {
+        id: "asset-filter-table",
+        module: "whitelistMenu",
+        view: "whitelistView",
+        target: "#whitelistView .table-wrap",
+        title: "资产查询、授权反查和删除",
+        body: "列表支持按数据中心、用户类型、标签组，以及邮箱或昵称模糊查询；授权反查收束在本页面。白名单用户可单个删除，也可勾选后批量删除。",
+        loc: "白名单资产 > 用户列表"
+      },
+      {
+        id: "asset-delete-users",
+        module: "whitelistMenu",
+        view: "whitelistView",
+        target: "#whitelistView .batch-bar",
+        title: "批量删除白名单用户",
+        body: "勾选用户后可批量删除跨页已选用户。删除前需要确认关联授权策略数量，删除后用户不再通过白名单资产命中策略。",
+        loc: "白名单资产 > 批量操作"
+      },
+      {
+        id: "asset-auth-detail",
+        module: "whitelistMenu",
+        view: "whitelistDetailView",
+        target: "#whitelistDetailView .page-head",
+        title: "仅反查白名单授权",
+        body: "这里专门展示白名单用户被哪些策略授权。普通用户自然命中 AB test 或 OTA 的运行结果，在对应策略详情中查看。",
+        loc: "白名单授权详情"
+      },
+      {
+        id: "provision-list-scope",
+        module: "provisionMenu",
+        view: "listView",
+        target: "#listView .filter-form",
+        title: "配网入口策略筛选",
+        body: "配网入口策略页承载配网入口和 GTM 两类策略，按策略类型、数据中心、产品、产品状态、状态和负责人筛选，并支持产品或策略名称搜索。",
+        loc: "配网入口策略 > 筛选区"
+      },
+      {
+        id: "provision-list-row",
+        module: "provisionMenu",
+        view: "listView",
+        target: "#listView .table-wrap",
+        title: "配网入口只做白名单",
+        body: "开发中产品的配网入口授权仅基于白名单 beta 种子用户；alpha 内部测试人员默认授权，不需要在策略里再次勾选。",
+        loc: "配网入口策略 > 列表"
+      },
+      {
+        id: "ota-list-merge",
+        module: "otaMenu",
+        view: "listView",
+        target: "#listView .filter-form",
+        title: "OTA 任务合并为策略",
+        body: "现有 OTA 页面能力合并到 OTA 策略页，所有 OTA 任务转换为策略记录；筛选不再有策略类型和数据中心，支持产品、状态、负责人及产品/固件/策略名称搜索。",
+        loc: "OTA 策略 > 筛选区"
+      },
+      {
+        id: "ota-list-progress",
+        module: "otaMenu",
+        view: "listView",
+        target: "#listView .table-wrap",
+        title: "策略详情承载进度",
+        body: "OTA 列表的查看入口展示策略配置、升级进度、安全阈值统计和命中范围；自动暂停、恢复和结束按状态机流转。",
+        loc: "OTA 策略 > 列表"
+      },
+      {
+        id: "ab-list-filter",
+        module: "abMenu",
+        view: "listView",
+        target: "#listView .filter-form",
+        title: "AB test 独立入口",
+        body: "AB test 策略只管理 RN 面板实验，不混入 OTA 或配网入口；筛选支持产品、状态、负责人，以及产品/PanelCode/策略名称搜索。",
+        loc: "AB test 策略 > 筛选区"
+      },
+      {
+        id: "ab-list-device-bucket",
+        module: "abMenu",
+        view: "listView",
+        target: "#listView .table-wrap",
+        title: "设备稳定分桶",
+        body: "普通用户 AB 以设备为主体稳定分桶。绑定用户与共享用户命中不一致时，以设备绑定关系或设备分桶结果为准。",
+        loc: "AB test 策略 > 列表"
+      },
+      {
+        id: "create-base-object",
+        view: "createView",
+        target: "#objectSectionTitle",
+        title: "新建/编辑由入口决定",
+        body: "抽屉状态由打开方式决定：从新增进入就是新建策略，从列表编辑进入就是编辑策略；用户不需要额外选择编辑态。",
+        loc: "策略抽屉 > 基础信息"
+      },
+      {
+        id: "provision-create-resource",
+        view: "createView",
+        object: "provision",
+        target: "#resourceSourcePanel",
+        title: "来源是白名单资产",
+        body: "配网入口仅对开发中产品有效，名单来自白名单资产或标签组；策略内批量导入是预授权，发布时才新建不存在的 beta 用户并授权当前策略。",
+        loc: "配网入口策略 > 关联资源数据"
+      },
+      {
+        id: "provision-create-users",
+        view: "createView",
+        object: "provision",
+        target: "#conditionPanel",
+        title: "策略用户范围",
+        body: "默认勾选 alpha、已授权 beta 和导入待授权用户；可授权 beta 默认不勾选。列表支持搜索、标签组过滤、分页、跨页三态选择。",
+        loc: "配网入口策略 > 策略用户范围"
+      },
+      {
+        id: "gtm-create-range",
+        view: "createView",
+        object: "gtm",
+        target: "#gtmReleaseMode",
+        title: "GTM 联动产品状态",
+        body: "通过 GTM 策略选择开发中产品后，产品进入已上架-部分放开；选择全面放开后不再配置范围，所有 App 用户均可发现配网入口。",
+        loc: "GTM 上架 > 放开方式"
+      },
+      {
+        id: "gtm-range-mode",
+        view: "createView",
+        object: "gtm",
+        target: "#gtmCountryPanel",
+        title: "范围模式二选一",
+        body: "GTM 上架范围按国家/地区或数据中心配置。国家/地区支持洲和国家不同层级复选，被上级覆盖的国家不重复选择。",
+        loc: "GTM 上架 > 上架范围"
+      },
+      {
+        id: "ota-firmware-region",
+        view: "createView",
+        object: "ota",
+        target: "#otaRegionSelector",
+        title: "固件和发布地区在策略内配置",
+        body: "OTA 不再使用独立数据中心字段。目标固件和发布地区由策略维护，发布地区支持多选，并和命中过滤条件求交集。",
+        loc: "OTA 策略 > 固件和发布地区"
+      },
+      {
+        id: "ota-condition-config",
+        view: "createView",
+        object: "ota",
+        target: "#conditionPanel",
+        title: "命中过滤条件必须可配置",
+        body: "白名单、设备列表、分批比例、地区被添加后都要展示配置入口。白名单授权方式、地区模式、单批上线台数限制切换后，次级配置同步变化。",
+        loc: "OTA 策略 > 命中过滤条件"
+      },
+      {
+        id: "ota-batch-full-release",
+        view: "createView",
+        object: "ota",
+        target: "#previewTitle",
+        title: "分批也支持成熟固件全量",
+        body: "分批比例可限制单批上线台数，也可不限制。成熟固件需要推送给全部用户时，按批次完成 100% 全量发布。",
+        loc: "OTA 策略 > 影响预览"
+      },
+      {
+        id: "ab-audience-first",
+        view: "createView",
+        object: "rn",
+        target: "#audienceMode",
+        title: "受众模式优先",
+        body: "AB test 先选择受众模式：开发中产品只能白名单测试；已上架产品可选白名单测试或普通用户 AB，二选一。",
+        loc: "AB test > 受众模式"
+      },
+      {
+        id: "ab-resource",
+        view: "createView",
+        object: "rn",
+        target: "#variantA",
+        title: "RN 资源来自扩展程序管理",
+        body: "变体 A/B 来自 App > 扩展程序管理的产品模块版本，可选当前最新版本和其他开发中版本；原生控制面板产品阻止创建 RN AB。",
+        loc: "AB test > RN 面板资源"
+      },
+      {
+        id: "ab-traffic-cap",
+        view: "createView",
+        object: "rn",
+        target: "#trafficCap",
+        title: "先控流量，再按比例分桶",
+        body: "普通用户 AB 先通过流量上限圈定进入实验的设备，再按用户比例分配 A/B。影响预览按流量上限更新实验规模。",
+        loc: "AB test > 流量上限"
+      },
+      {
+        id: "preview-operation-scope",
+        view: "createView",
+        target: "#operationScope",
+        title: "合并发布校验和影响预览",
+        body: "三个策略抽屉统一把阻塞冲突、状态校验、影响规模和可操作范围放在右侧预览区，发布按钮根据阻塞冲突禁用。",
+        loc: "策略抽屉 > 发布校验与影响预览"
+      },
+      {
+        id: "drawer-detail-config",
+        drawer: "strategy-detail",
+        target: "#drawerDetailConfig",
+        title: "详情抽屉展示实际配置",
+        body: "点击查看只展示策略详细配置和命中范围；解释说明收敛为 tips，不再放大成独立模块。",
+        loc: "策略详情抽屉"
+      },
+      {
+        id: "drawer-detail-ota",
+        drawer: "strategy-detail",
+        type: "OTA",
+        target: "#drawerHitRangePanel",
+        title: "OTA 详情包含运行指标",
+        body: "OTA 策略详情额外展示当前批次进度、失败率、升级成功率和下载峰值，用于判断自动暂停和恢复。",
+        loc: "OTA 策略详情"
+      },
+      {
+        id: "drawer-add-user",
+        drawer: "whitelist-add",
+        target: "#drawerWhitelistAccount",
+        title: "新增用户侧边抽屉",
+        body: "新增白名单用户在侧边抽屉完成。账号为邮箱，昵称选填，保存时按邮箱 + 数据中心校验唯一性，不校验 App 注册状态。",
+        loc: "新增白名单用户抽屉"
+      },
+      {
+        id: "drawer-add-tag",
+        drawer: "whitelist-add",
+        target: "#drawerWhitelistTag",
+        title: "标签组来自既有页面",
+        body: "标签组选项来自现有白名单标签组管理页，新增用户时为单选；批量导入模板使用标签组 ID。",
+        loc: "新增白名单用户 > 标签组"
+      },
+      {
+        id: "drawer-import-template",
+        drawer: "whitelist-import",
+        target: "#drawerBody .rule-layout",
+        title: "批量导入模板",
+        body: "导入模板包含账号、昵称、用户类型、数据中心和标签组 ID；资产页导入会直接新建用户，策略内导入会作为待新建并授权当前策略。",
+        loc: "批量导入抽屉 > 模板"
+      },
+      {
+        id: "drawer-import-file",
+        drawer: "whitelist-import",
+        target: "#importFile",
+        title: "导入后进入同步处理",
+        body: "点击导入后进入不可离开的同步处理进度弹窗。处理完成后展示成功/失败统计、失败原因，并支持导出失败列表。",
+        loc: "批量导入抽屉 > 文件入口"
+      },
+      {
+        id: "modal-import-progress",
+        modal: "import-progress",
+        target: "#progressMask .modal-card",
+        title: "同步处理不可离开",
+        body: "导入处理期间不可离开，避免资产写入和策略预授权状态不一致。完成后进入导入结果页。",
+        loc: "导入处理中弹窗"
+      },
+      {
+        id: "modal-whitelist-delete",
+        modal: "whitelist-delete",
+        target: "#deleteWhitelistMask .modal-card",
+        title: "删除前确认影响范围",
+        body: "删除白名单用户会移除资产记录，并停止其通过白名单命中配网入口、OTA 或 AB test 策略；历史策略记录保留用于追溯。",
+        loc: "删除白名单用户确认弹窗"
+      },
+      {
+        id: "drawer-import-result",
+        drawer: "import-result",
+        target: "#drawerBody .metric-grid",
+        title: "导入结果闭环",
+        body: "结果页统计成功和失败数量，列出每条失败原因；成功用户按入口差异处理，资产页直接新建，策略页发布时新建并授权。",
+        loc: "导入结果抽屉"
+      },
+      {
+        id: "drawer-impact-old-entry",
+        drawer: "impact-demo",
+        target: "#impactOldEntryPanel",
+        title: "旧入口迁移和权限态",
+        body: "该示意用于覆盖旧白名单入口迁移、产品详情直接全面上架、权限菜单拆分等验收场景，不代表新增业务主流程。",
+        loc: "关联页面与权限示意"
+      }
+    ];
+
+    function activeViewId() {
+      return $(".view.active")?.id || "listView";
+    }
+
+    function annotationContextLabel() {
+      if (activeModalAnnotationContext) return "当前弹窗批注";
+      if (activeDrawerAnnotationContext) return "当前业务抽屉批注";
+      if (activeViewId() === "createView") return `${currentObjectLabel()}新建/编辑批注`;
+      return `${menuModules[currentModule]?.title || "当前页面"}批注`;
+    }
+
+    function annotationMatchesCurrentContext(note) {
+      if (activeModalAnnotationContext) {
+        return note.modal === activeModalAnnotationContext;
+      }
+      if (activeDrawerAnnotationContext) {
+        const drawerMatch = note.drawer === activeDrawerAnnotationContext;
+        const typeMatch = !note.type || note.type === activeDrawerStrategyType;
+        return drawerMatch && typeMatch;
+      }
+      if (note.drawer || note.modal) return false;
+      if (note.module && note.module !== currentModule) return false;
+      if (note.view && note.view !== activeViewId()) return false;
+      if (note.object && note.object !== currentObject) return false;
+      if (note.audienceMode && note.audienceMode !== rnAudienceMode) return false;
+      return true;
+    }
+
+    function currentPrototypeAnnotations() {
+      return prototypeAnnotations.filter(annotationMatchesCurrentContext);
+    }
+
+    function clearPrototypeAnnotationAnchors() {
+      $$(".prototype-note-anchor").forEach(anchor => anchor.remove());
+      $$(".prototype-note-host").forEach(target => target.classList.remove("prototype-note-host"));
+      $$(".prototype-note-target-active").forEach(target => target.classList.remove("prototype-note-target-active"));
+    }
+
+    function annotationElements(note) {
+      const target = document.querySelector(note.target);
+      if (!target) return null;
+      const host = target.matches("input, select, textarea, button")
+        ? target.closest(".field, .toolbar, .segmented, .subpanel, .panel, .drawer-body, .modal-card") || target
+        : target;
+      return { target, host };
+    }
+
+    function activatePrototypeAnnotation(id, options = {}) {
+      activePrototypeAnnotationId = id;
+      const notes = currentPrototypeAnnotations();
+      $$(".prototype-note-card").forEach(card => card.classList.toggle("active", card.dataset.noteId === id));
+      $$(".prototype-note-target-active").forEach(target => target.classList.remove("prototype-note-target-active"));
+      const note = notes.find(item => item.id === id);
+      const elements = note ? annotationElements(note) : null;
+      if (!elements) return;
+      const focusTarget = elements.target.matches("input, select, textarea, button") ? elements.host : elements.target;
+      focusTarget.classList.add("prototype-note-target-active");
+      if (options.scroll !== false) {
+        focusTarget.scrollIntoView({ block: "center", inline: "nearest", behavior: "smooth" });
+      }
+    }
+
+    function renderPrototypeAnnotations() {
+      const list = $("#prototypeAnnotationList");
+      const caption = $("#prototypeAnnotationContext");
+      if (!list || !caption) return;
+      clearPrototypeAnnotationAnchors();
+      if (!annotationPanelOpen) return;
+      const notes = currentPrototypeAnnotations();
+      caption.textContent = `${annotationContextLabel()}。黄色编号是批注锚点，不属于真实 IoT Admin 页面。`;
+      if (!notes.length) {
+        list.innerHTML = `<div class="prototype-annotation-empty">当前页面没有单独批注。切换页面、打开策略抽屉或导入弹窗后会自动更新。</div>`;
+        activePrototypeAnnotationId = null;
+        return;
+      }
+      if (!notes.some(note => note.id === activePrototypeAnnotationId)) {
+        activePrototypeAnnotationId = notes[0].id;
+      }
+      list.innerHTML = notes.map((note, index) => `
+        <button class="prototype-note-card ${note.id === activePrototypeAnnotationId ? "active" : ""}" type="button" data-note-id="${note.id}">
+          <span class="prototype-note-number">${index + 1}</span>
+          <span class="prototype-note-copy">
+            <strong>${note.title}</strong>
+            <p>${note.body}</p>
+            <span>关联位置：${note.loc}</span>
+          </span>
+        </button>
+      `).join("");
+      notes.forEach((note, index) => {
+        const elements = annotationElements(note);
+        if (!elements) return;
+        elements.host.classList.add("prototype-note-host");
+        const anchor = document.createElement("button");
+        anchor.type = "button";
+        anchor.className = "prototype-note-anchor";
+        anchor.textContent = String(index + 1);
+        anchor.setAttribute("aria-label", `查看批注：${note.title}`);
+        anchor.addEventListener("click", event => {
+          event.stopPropagation();
+          activatePrototypeAnnotation(note.id);
+        });
+        elements.host.appendChild(anchor);
+      });
+      $$(".prototype-note-card").forEach(card => {
+        card.addEventListener("click", () => activatePrototypeAnnotation(card.dataset.noteId));
+      });
+      activatePrototypeAnnotation(activePrototypeAnnotationId, { scroll: false });
+    }
+
+    function setPrototypeAnnotationsOpen(open) {
+      annotationPanelOpen = open;
+      document.body.classList.toggle("annotation-open", open);
+      renderPrototypeAnnotations();
+    }
+
+    const $ = (selector) => document.querySelector(selector);
+    const $$ = (selector) => Array.from(document.querySelectorAll(selector));
+
+    function whitelistKey(account, dc) {
+      return `${account.trim().toLowerCase()}@@${dc}`;
+    }
+
+    function cloneBatchImportUsers(context) {
+      const pending = context === "strategy";
+      return batchImportNewUsers.map(user => ({
+        ...user,
+        id: `${context}-${user.id}`,
+        pending,
+        imported: true,
+        checked: true,
+        policies: []
+      }));
+    }
+
+    function hasStrategyImport() {
+      return importBatchContext === "strategy" && strategyImportedUsers.length > 0;
+    }
+
+    function setView(viewId) {
+      if (viewId === "createView" && !menuModules[currentModule].assetOnly && !menuModules[currentModule].objects.includes(currentObject)) {
+        setObject(menuModules[currentModule].defaultObject);
+      }
+      $$(".tab").forEach(tab => tab.classList.toggle("active", tab.dataset.view === viewId));
+      $$(".view").forEach(view => view.classList.toggle("active", view.id === viewId));
+      if (viewId === "createView") {
+        updateCreateState();
+      }
+      if (viewId === "whitelistView") {
+        renderWhitelistAssets();
+      }
+      if (viewId === "whitelistDetailView") {
+        renderWhitelistAuthorizationDetail();
+      }
+      renderPrototypeAnnotations();
+    }
+
+    function setModule(module, switchToList = true) {
+      currentModule = module;
+      const config = menuModules[module];
+      $$('[data-module]').forEach(item => item.classList.toggle('active', item.dataset.module === module));
+      $('#breadcrumbRoot').textContent = config.parent || '运营管理';
+      $('#breadcrumbCurrent').textContent = config.title;
+      $('#pageTitle').textContent = config.title;
+      $('#pageDesc').textContent = config.desc;
+      $('#newStrategyTop').textContent = config.newText;
+      $('#pageActions').classList.toggle('hide', !!config.assetOnly);
+      $('#workspaceTabsPanel').classList.add('hide');
+      $('#objectSectionTitle').textContent = config.objects.length > 1 ? '策略类型和基础信息' : '基础信息';
+      $('#filterType').innerHTML = `<option>全部</option>${config.types.map(type => `<option>${type}</option>`).join('')}`;
+      $('#filterTypeField').classList.toggle('hide', module !== 'provisionMenu');
+      $('#filterDcField').classList.toggle('hide', module !== 'provisionMenu');
+      $('#filterProductStateField').classList.toggle('hide', module !== 'provisionMenu');
+      $('#filterProductField').classList.toggle('hide', !!config.assetOnly);
+      $('#filterOwnerField').classList.toggle('hide', !!config.assetOnly);
+      renderStrategyFilterOptions(config);
+      $('#filterKeyword').placeholder = module === 'otaMenu'
+        ? '输入产品名称、固件版本或策略名称'
+        : module === 'abMenu'
+          ? '输入产品名称、PanelCode 或策略名称'
+          : '输入产品名称或策略名称';
+      document.querySelector('label[for="filterKeyword"]').textContent = module === 'otaMenu'
+        ? '产品 / 固件 / 策略名称'
+        : module === 'abMenu'
+          ? '产品 / PanelCode / 策略名称'
+          : '产品 / 策略名称';
+      $$('.object-card').forEach(card => {
+        card.classList.toggle('hide', !config.objects.includes(card.dataset.object));
+      });
+      if (config.assetOnly) {
+        renderWhitelistAssets();
+        setView('whitelistView');
+        return;
+      }
+      setObject(config.defaultObject);
+      strategyPage = 1;
+      renderStrategyFilterOptions(menuModules[currentModule]);
+      renderStrategies();
+      renderWhitelistAssets();
+      if (switchToList) {
+        setView('listView');
+      }
+    }
+
+    function strategyOwner(item) {
+      return item.owner || ({ '配网入口': 'Product Ops', 'GTM': 'GTM Ops', 'OTA': 'Firmware Ops', 'RN 面板': 'UX Research' }[item.type] || 'Product Ops');
+    }
+
+    function setSelectOptions(selector, values) {
+      const select = $(selector);
+      if (!select) return;
+      const current = select.value;
+      select.innerHTML = values.map(value => `<option>${value}</option>`).join('');
+      select.value = values.includes(current) ? current : values[0];
+    }
+
+    function renderStrategyFilterOptions(config) {
+      const rows = strategies.filter(item => config.types.includes(item.type));
+      setSelectOptions('#filterProduct', ['全部产品', ...new Set(rows.map(item => item.product))]);
+      setSelectOptions('#filterOwner', ['全部负责人', ...new Set(rows.map(strategyOwner))]);
+      if (currentModule !== 'provisionMenu') {
+        $('#filterType').value = '全部';
+        $('#filterDc').value = '全部数据中心';
+        $('#filterProductState').value = '全部状态';
+      }
+    }
+
+    function renderStrategies() {
+      const allowedTypes = menuModules[currentModule].types;
+      const type = $('#filterType').value;
+      const status = $('#filterStatus').value;
+      const keyword = $('#filterKeyword').value.trim().toLowerCase();
+      const product = $('#filterProduct').value;
+      const productState = $('#filterProductState').value;
+      const owner = $('#filterOwner').value;
+      const dc = $('#filterDc').value;
+      const rows = strategies.filter(item => {
+        const moduleMatch = allowedTypes.includes(item.type);
+        const typeMatch = type === '全部' || item.type === type;
+        const statusMatch = status === '全部' || item.risk === status;
+        const productMatch = product === '全部产品' || item.product === product;
+        const stateMatch = currentModule !== 'provisionMenu' || productState === '全部状态' || item.productState === productState;
+        const ownerMatch = owner === '全部负责人' || strategyOwner(item) === owner;
+        const dcMatch = currentModule !== 'provisionMenu' || dc === '全部数据中心' || item.dc === dc || item.audience.includes(dc);
+        const keyMatch = !keyword || [item.name, item.product, item.version, item.detail?.['实验 ID'], item.detail?.['控制面板']].filter(Boolean).some(v => String(v).toLowerCase().includes(keyword));
+        return moduleMatch && typeMatch && statusMatch && productMatch && stateMatch && ownerMatch && dcMatch && keyMatch;
+      });
+      const totalPages = Math.max(1, Math.ceil(rows.length / strategyPageSize));
+      strategyPage = Math.min(Math.max(1, strategyPage), totalPages);
+      const start = (strategyPage - 1) * strategyPageSize;
+      const pageRows = rows.slice(start, start + strategyPageSize);
+      $('#strategyRows').innerHTML = pageRows.map(item => `
+        <tr>
+          <td><strong>${item.name}</strong><div class="subline">负责人：${strategyOwner(item)}</div></td>
+          <td><span class="tag blue">${item.type}</span></td>
+          <td><strong>${item.product}</strong><div class="subline">${item.productState}</div></td>
+          <td>${item.audience}</td>
+          <td>${item.version}</td>
+          <td><span class="tag ${statusClass(item)}">${item.risk}</span></td>
+          <td>${item.start}</td>
+          <td>
+            <div class="action-group strategy-actions">
+            <button class="btn link" data-detail="${strategies.indexOf(item)}">查看</button>
+            <button class="btn link" data-edit="${strategies.indexOf(item)}">编辑</button>
+            ${renderStatusActions(item)}
+            </div>
+          </td>
+        </tr>
+      `).join('');
+      $$('[data-detail]').forEach(button => {
+        button.addEventListener('click', () => openDrawer(strategies[Number(button.dataset.detail)]));
+      });
+      $$('[data-edit]').forEach(button => {
+        button.addEventListener('click', () => openStrategyDrawer('edit', strategies[Number(button.dataset.edit)]));
+      });
+      $$('[data-flow]').forEach(button => {
+        button.addEventListener('click', () => applyStatusAction(strategies[Number(button.dataset.index)], button.dataset.flow));
+      });
+      $('#strategyPagination').innerHTML = renderGenericPagination({ total: rows.length, page: strategyPage, pageSize: strategyPageSize, start, target: 'strategy' });
+      bindGenericPagination('[data-strategy-page]', value => {
+        strategyPage = nextPageValue(strategyPage, totalPages, value);
+        renderStrategies();
+      });
+      renderPrototypeAnnotations();
+    }
+
+    function statusClass(item) {
+      return strategyStates[item.risk]?.tag || item.riskTag || "";
+    }
+
+    function renderStatusActions(item) {
+      const index = strategies.indexOf(item);
+      return (strategyStates[item.risk]?.actions || []).filter(action => action !== "编辑").map(action => {
+        const danger = ["删除", "结束", "取消发布"].includes(action) ? " danger" : "";
+        return `<button class="btn link${danger}" data-flow="${action}" data-index="${index}">${action}</button>`;
+      }).join("");
+    }
+
+    function renderGenericPagination({ total, page, pageSize, start, target, disabledNote = "" }) {
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      const from = total ? start + 1 : 0;
+      const to = Math.min(start + pageSize, total);
+      const pageButtons = Array.from({ length: totalPages }, (_, index) => {
+        const value = index + 1;
+        return `<button class="btn ${value === page ? "active" : ""}" data-${target}-page="${value}">${value}</button>`;
+      }).join("");
+      return `
+        <span>共 ${total} 条</span>
+        <span>${pageSize}条/页</span>
+        <span>当前 ${from}-${to}</span>
+        <button class="btn" data-${target}-page="prev" ${page === 1 ? "disabled" : ""}>上一页</button>
+        ${pageButtons}
+        <button class="btn" data-${target}-page="next" ${page === totalPages ? "disabled" : ""}>下一页</button>
+        ${disabledNote ? `<span>${disabledNote}</span>` : ""}
+      `;
+    }
+
+    function nextPageValue(current, totalPages, value) {
+      if (value === "prev") return Math.max(1, current - 1);
+      if (value === "next") return Math.min(totalPages, current + 1);
+      const page = Number(value);
+      return Number.isNaN(page) ? current : Math.min(Math.max(1, page), totalPages);
+    }
+
+    function bindGenericPagination(selector, handler) {
+      $$(selector).forEach(button => {
+        button.addEventListener("click", () => {
+          const value = Object.entries(button.dataset).find(([key]) => key.endsWith("Page"))?.[1];
+          handler(value);
+        });
+      });
+    }
+
+    function applyStatusAction(item, action) {
+      if (action === "复制") {
+        strategies.unshift({
+          ...item,
+          name: `${item.name} 副本`,
+          risk: "草稿",
+          riskTag: strategyStates["草稿"].tag,
+          start: formatNow()
+        });
+        strategyPage = 1;
+        renderStrategies();
+        showToast("已复制为草稿，进入策略列表。");
+        return;
+      }
+      const next = {
+        "发布": "运行中",
+        "暂停": "暂停",
+        "恢复": "运行中",
+        "结束": "已结束",
+        "取消发布": "草稿",
+        "删除": "已结束",
+        "复制": "草稿"
+      }[action];
+      if (next) {
+        item.risk = next;
+        item.riskTag = strategyStates[next]?.tag || "";
+        renderStrategies();
+        showToast(`策略已${action}，当前状态：${next}。`);
+      }
+    }
+
+    function openDrawer(item) {
+      activeDrawerAnnotationContext = "strategy-detail";
+      activeDrawerStrategyType = item.type;
+      $("#drawerTitle").textContent = item.name;
+      const detailRows = Object.entries(item.detail).map(([key, value]) => `<dt>${key}</dt><dd>${value}</dd>`).join("");
+      $("#drawerBody").innerHTML = `
+        <div>
+          <span class="tag blue">${item.type}</span>
+          <span class="tag ${statusClass(item)}">${item.risk}</span>
+        </div>
+        <div class="subpanel" id="drawerDetailConfig">
+          <h3>详细配置 <span class="tips" title="说明项仅作为提示，主内容展示实际配置">?</span></h3>
+          <dl class="detail-list">
+            <dt>产品</dt><dd>${item.product} / ${item.productState}</dd>
+            <dt>受众</dt><dd>${item.audience}</dd>
+            <dt>版本</dt><dd>${item.version}</dd>
+            <dt>开始时间</dt><dd>${item.start}</dd>
+            ${detailRows}
+          </dl>
+        </div>
+        <div class="subpanel" id="drawerHitRangePanel">
+          <h3>${item.type === "OTA" ? "OTA 进度与安全阈值" : "命中范围"} <span class="tips" title="真实数据由服务端命中计算和运行指标提供">?</span></h3>
+          ${detailHitRange(item)}
+        </div>
+      `;
+      $("#drawerPrimary").textContent = "编辑策略";
+      $("#drawerSecondary").textContent = "关闭";
+      drawerPrimaryAction = () => {
+        closeDrawer();
+        openStrategyDrawer("edit", item);
+      };
+      drawerSecondaryAction = closeDrawer;
+      $("#drawerMask").classList.add("open");
+      renderPrototypeAnnotations();
+    }
+
+    function detailHitRange(item) {
+      if (item.type === "OTA") {
+        return `
+          <div class="metric-grid">
+            <div class="metric"><div class="metric-value">32%</div><div class="metric-label">当前批次进度</div></div>
+            <div class="metric"><div class="metric-value">2.1%</div><div class="metric-label">失败率</div></div>
+            <div class="metric"><div class="metric-value">97.4%</div><div class="metric-label">升级成功率</div></div>
+            <div class="metric"><div class="metric-value">920/min</div><div class="metric-label">下载峰值</div></div>
+          </div>
+          <div class="disabled-note">命中范围：发布地区北美、欧洲；白名单 beta + 设备列表 + 分批比例。</div>
+        `;
+      }
+      if (item.type === "GTM") {
+        return `<div class="disabled-note">当前开放范围：美国、加拿大；如编辑已有 GTM 策略，范围会回显并允许增加或减少。</div>`;
+      }
+      if (item.type === "RN 面板") {
+        return `<div class="disabled-note">命中范围：8,420 台设备；普通用户按设备稳定分桶，白名单测试仅展示白名单用户授权。</div>`;
+      }
+      return `<div class="disabled-note">命中范围：Seed NA 2026Q2 标签组 + 已授权 beta 用户；alpha 默认授权。</div>`;
+    }
+
+    function closeDrawer() {
+      $("#drawerMask").classList.remove("open");
+      $("#drawerMask .drawer").classList.remove("wide");
+      activeDrawerAnnotationContext = null;
+      activeDrawerStrategyType = null;
+      drawerPrimaryAction = null;
+      drawerSecondaryAction = null;
+      renderPrototypeAnnotations();
+    }
+
+    function openStrategyDrawer(mode = "new", item = null) {
+      activeDrawerAnnotationContext = null;
+      activeDrawerStrategyType = null;
+      editingStrategy = item;
+      const config = menuModules[currentModule];
+      $("#createDrawerTitle").textContent = mode === "edit" && item ? `编辑策略：${item.name}` : config.newText;
+      $("#publishButton").textContent = mode === "edit" ? "保存修改" : "发布策略";
+      $("#saveDraftButton").classList.toggle("hide", mode === "edit");
+      if (item) {
+        const objectMap = { "配网入口": "provision", "GTM": "gtm", "OTA": "ota", "RN 面板": "rn" };
+        setObject(objectMap[item.type] || config.defaultObject);
+        $("#strategyName").value = item.name;
+      } else {
+        setObject(config.defaultObject);
+      }
+      setView("createView");
+      updateCreateState();
+    }
+
+    function closeCreateDrawer() {
+      editingStrategy = null;
+      renderStrategies();
+      setView("listView");
+    }
+
+    function setObject(object) {
+      currentObject = object;
+      strategyScopePage = 1;
+      $$(".object-card").forEach(card => card.classList.toggle("active", card.dataset.object === object));
+      $$(".scenario").forEach(s => s.classList.toggle("active", s.dataset.scenario === object));
+      renderProductOptions(object);
+      if (object === "provision") {
+        $("#productSelect").value = "dev";
+        $("#strategyName").value = "V3 种子用户配网入口";
+        conditions = [...objectConditionConfig.provision.defaultConditions];
+      }
+      if (object === "gtm") {
+        $("#productSelect").value = "dev";
+        $("#strategyName").value = "Thermo 扩大北美上架范围";
+        $("#gtmRangeMode").value = editingStrategy?.type === "GTM" && editingStrategy.audience.includes("数据中心") ? "数据中心" : "国家/地区";
+        conditions = [...objectConditionConfig.gtm.defaultConditions];
+      }
+      if (object === "ota") {
+        $("#productSelect").value = "pump";
+        $("#strategyName").value = "Pump-H OTA 1.2.0 北美灰度";
+        conditions = [...objectConditionConfig.ota.defaultConditions];
+      }
+      if (object === "rn") {
+        $("#productSelect").value = "pump";
+        $("#strategyName").value = "Pump-H RN 面板 A/B 验证";
+        conditions = [];
+        setRnAudienceMode("normal", false);
+      }
+      updateCreateState();
+      renderConditions();
+      renderResourceSource();
+      renderPrototypeAnnotations();
+    }
+
+    function renderProductOptions(object) {
+      $("#productSelect").innerHTML = (productOptions[object] || []).map(option => `<option value="${option.value}">${option.label}</option>`).join("");
+      $("#dcSelect").closest(".field").classList.toggle("hide", object === "gtm" || object === "ota");
+    }
+
+    function updateGtmControls() {
+      const mode = $('#gtmRangeMode')?.value || '国家/地区';
+      const releaseMode = $('#gtmReleaseMode')?.value || '部分放开';
+      const fullOpen = releaseMode === '全面放开';
+      if ($('#gtmRangeMode')) $('#gtmRangeMode').disabled = fullOpen;
+      $('#gtmCountryPanel')?.classList.toggle('hide', fullOpen || mode !== '国家/地区');
+      $('#gtmDcPanel')?.classList.toggle('hide', fullOpen || mode !== '数据中心');
+      const action = $('#gtmDrawerAction');
+      if (action) {
+        action.textContent = editingStrategy && currentObject === 'gtm' ? '编辑已有 GTM 策略' : fullOpen ? '新建全面放开策略' : '新建 GTM 上架策略';
+      }
+    }
+
+    function updateOtaRegionSummary() {
+      const selected = $$("[data-ota-region]").filter(input => input.checked).map(input => input.dataset.otaRegion);
+      const summary = $("#otaRegionSummary");
+      if (summary) summary.textContent = selected.length ? `已选择：${selected.join("、")}` : "至少选择一个发布地区";
+    }
+
+    function currentObjectLabel() {
+      return {
+        provision: "配网入口",
+        gtm: "GTM 上架",
+        ota: "OTA 版本",
+        rn: "AB test"
+      }[currentObject] || "发布策略";
+    }
+
+    function renderOperationScope() {
+      const modeTag = editingStrategy ? `编辑：${editingStrategy.risk}` : "新建策略";
+      const rnAudience = rnAudienceMode === "whitelist" ? "白名单测试" : "普通用户 AB";
+      const scopeRows = {
+        provision: [
+          ["对象", "开发中产品的 App 配网入口可见性。"],
+          ["可操作", editingStrategy ? "可修改 beta 用户、标签组、批量导入预授权和策略名称；alpha 默认授权，不在本策略重复选择。" : "可选择开发中产品，并从白名单资产选择 beta 用户或标签组；也可批量导入后在发布时新建并授权。"],
+          ["边界", "不支持普通用户比例、设备列表、GTM 地区发布或 AB test。"]
+        ],
+        gtm: [
+          ["对象", "开发中产品的商业化上架范围，发布后影响产品状态。"],
+          ["可操作", editingStrategy ? "可在已有 GTM 策略中增加、减少上架范围，或一键全面放开。" : "仅能选择开发中产品创建部分放开策略；范围模式为国家/地区或数据中心二选一。"],
+          ["边界", "全面放开优先于范围配置；已上架-部分放开产品应从已有 GTM 策略进入编辑。"]
+        ],
+        ota: [
+          ["对象", "已上架产品的固件可见范围、升级批次和安全阈值。"],
+          ["可操作", editingStrategy ? "可调整未开始批次、发布地区、命中条件和阈值；自动暂停后需恢复才继续分发。" : "可配置目标固件、发布地区、白名单/设备列表/分批比例/地区条件和失败保护。"],
+          ["边界", "已触达或已升级设备不回滚；OTA 不做 AB test。"]
+        ],
+        rn: [
+          ["对象", `RN 面板变体分发，当前受众模式为${rnAudience}。`],
+          ["可操作", rnAudienceMode === "whitelist" ? "可选择 beta 白名单用户或标签组，并配置 A/B 变体；alpha 通过测试覆盖回归验证。" : "可配置 A/B 变体、流量上限、用户比例、有效期和到期关闭策略；普通用户以设备稳定分桶。"],
+          ["边界", "AB test 不叠加额外命中条件；开发中产品只允许白名单测试，原生面板不可创建 RN AB。"]
+        ]
+      }[currentObject] || [];
+      return `
+        <div class="scope-title">
+          <span>操作范围</span>
+          <span>
+            <span class="tag blue">${currentObjectLabel()}</span>
+            <span class="tag">${modeTag}</span>
+          </span>
+        </div>
+        <dl class="scope-list">
+          ${scopeRows.map(([key, value]) => `<dt>${key}</dt><dd>${value}</dd>`).join("")}
+        </dl>
+      `;
+    }
+
+    function drawerFlowButtonClass(action) {
+      return ["删除", "结束", "取消发布"].includes(action) ? "btn danger" : "btn";
+    }
+
+    function renderStateActionBar(blocked) {
+      const bar = $("#stateActionBar");
+      if (!bar) return;
+      if (!editingStrategy) {
+        bar.innerHTML = `<span class="subline">新建策略仅提供保存草稿和发布策略；发布成功后进入运行中状态，后续在编辑抽屉或策略列表中流转。</span>`;
+        return;
+      }
+      const actions = (strategyStates[editingStrategy.risk]?.actions || []).filter(action => action !== "编辑");
+      if (!actions.length) {
+        bar.innerHTML = `<span class="subline">当前状态无额外流转操作，仅支持保存配置修改。</span>`;
+        return;
+      }
+      bar.innerHTML = `
+        <span class="subline">状态操作</span>
+        ${actions.map(action => {
+          const disabled = blocked && ["发布", "恢复"].includes(action) ? "disabled" : "";
+          return `<button class="${drawerFlowButtonClass(action)}" data-drawer-flow="${action}" ${disabled}>${action}</button>`;
+        }).join("")}
+      `;
+      $$("[data-drawer-flow]").forEach(button => {
+        button.addEventListener("click", () => {
+          if (button.disabled || !editingStrategy) return;
+          applyStatusAction(editingStrategy, button.dataset.drawerFlow);
+          updateCreateState();
+        });
+      });
+    }
+
+    function updateCreateState() {
+      const selected = $('#productSelect').value;
+      const state = productState[selected];
+      const rnNormalButton = document.querySelector('#audienceMode button[data-mode="normal"]');
+      if (rnNormalButton) rnNormalButton.disabled = currentObject === 'rn' && selected === 'dev';
+      $('#alphaOverrideField')?.classList.toggle('hide', currentObject === 'rn' && rnAudienceMode === 'normal');
+      $('#scopeLabel').textContent = scopeLabelText();
+      const whitelistMode = currentObject === 'provision' || (currentObject === 'rn' && rnAudienceMode === 'whitelist');
+      let metricUsers = whitelistMode && hasStrategyImport() ? '226' : state.users;
+      let metricDevices = state.devices;
+      $('#metricRisk').textContent = state.risk;
+
+      const trafficCapText = $('#trafficCap')?.value || '最多 10% 可触达设备 / 1,000 台';
+      const bucketRatioText = $('#bucketRatio')?.value || 'A 50% / B 50%';
+      const rnDistributionText = trafficCapText.startsWith('不限制')
+        ? `不限制实验流量，按 ${bucketRatioText} 全量稳定分桶。`
+        : `${trafficCapText}进入实验，再按 ${bucketRatioText} 稳定分桶。`;
+      if ($('#trafficCapPreview')) $('#trafficCapPreview').textContent = trafficCapText;
+      if ($('#bucketRatioPreview')) $('#bucketRatioPreview').textContent = bucketRatioText;
+      if (currentObject === 'rn' && rnAudienceMode === 'normal') {
+        const baseDevices = Number(String(state.devices).replace(/,/g, '')) || 0;
+        const percent = trafficCapText.includes('20%') ? 0.2 : trafficCapText.includes('10%') ? 0.1 : 1;
+        const absoluteCap = trafficCapText.includes('2,000') ? 2000 : trafficCapText.includes('1,000') ? 1000 : baseDevices;
+        const experimentDevices = Math.min(Math.round(baseDevices * percent), absoluteCap);
+        metricDevices = trafficCapText.startsWith('不限制') ? state.devices : experimentDevices.toLocaleString();
+        metricUsers = metricDevices;
+      }
+      $('#metricUsers').textContent = metricUsers;
+      $('#metricDevices').textContent = metricDevices;
+
+      let summary = `RN 面板普通用户 AB：${rnDistributionText}`;
+      let explain = `命中解释：先判断设备是否进入流量上限（${trafficCapText}），再按用户比例（${bucketRatioText}）分配变体；设备 D 命中变体 A 后，共享用户查看同一设备仍使用 A。alpha 版本指定会标记为测试覆盖。`;
+      let conflict = '暂无阻塞冲突。保存前将再次校验产品状态、受众二选一、GTM 重复策略和重复条件。';
+      let conflictClass = 'alert success';
+
+      if (currentObject === 'ota') {
+        summary = 'OTA 策略：现有 OTA 任务统一转换为策略记录；发布地区为北美、欧洲，命中过滤条件将在该范围内继续收敛。';
+        explain = '实际升级范围 = 策略发布地区 AND 策略命中条件；分批比例可限制或不限制单批上线台数，默认不做 OTA AB test。';
+      }
+      if (currentObject === 'provision') {
+        summary = '配网入口：仅开发中产品白名单用户可见，不混入 GTM 地区发布或用户比例。';
+        explain = '授权数据来自运营管理 > 白名单资产：选择 beta 种子用户或标签组；alpha 内部测试人员默认授权，不在本策略配置。';
+        if (hasStrategyImport()) {
+          summary = '配网入口：已解析批量导入 100 位用户，存在用户直接授权，不存在用户将在发布时新建白名单并授权当前产品。';
+          explain = '白名单选择区只展示可授权 beta、默认授权 alpha、以及批量导入准备新建的 beta 用户。';
+        }
+      }
+      if (currentObject === 'gtm') {
+        const releaseMode = $('#gtmReleaseMode')?.value || '部分放开';
+        summary = releaseMode === '全面放开'
+          ? 'GTM：本次将全面放开产品上架，发布后所有 App 用户均可发现该产品配网入口。'
+          : 'GTM：新建策略选择开发中产品后，产品变为已上架-部分放开；已有 GTM 策略应进入编辑态调整范围。';
+        explain = releaseMode === '全面放开'
+          ? '全面放开优先级高于上架范围；不需要再配置国家/地区或数据中心范围。'
+          : 'GTM 上架范围就是命中范围，不再叠加命中过滤条件。判断方式可选数据中心或国家/地区清单。';
+      }
+      if (currentObject === 'rn' && rnAudienceMode === 'whitelist') {
+        summary = 'RN 面板白名单测试：从白名单资产选择 beta 用户或标签组；开发中产品只允许该模式。';
+        explain = 'alpha 内部测试人员通过版本指定做回归覆盖；beta 种子用户通过白名单获得 RN 面板测试资格。';
+        if (hasStrategyImport()) {
+          summary = 'RN 面板白名单测试：批量导入名单会复用已存在白名单用户，并为不存在账号创建 beta 白名单用户后授权当前策略。';
+        }
+      }
+      if (selected === 'native' && currentObject === 'rn') {
+        conflict = '阻塞冲突：原生控制面板不能作为动态 RN 面板 AB test 资源。';
+        conflictClass = 'alert danger';
+      }
+      if (selected === 'off') {
+        conflict = '阻塞冲突：已下架产品一般情况下不支持发布策略。';
+        conflictClass = 'alert danger';
+      }
+      if (currentObject === 'ota' && conditions.includes('地区')) {
+        conflict = '范围提示：地区条件超出发布地区时不会阻断发布，实际 OTA 范围按发布地区与命中条件交集执行。';
+        conflictClass = 'alert warning';
+      }
+      if (currentObject === 'gtm' && selected === 'thermo' && !editingStrategy) {
+        conflict = '阻塞冲突：该产品已存在运行中的 GTM 部分放开策略，请进入已有策略编辑扩大、缩小或全面放开。';
+        conflictClass = 'alert danger';
+      }
+      const blocked = (selected === 'native' && currentObject === 'rn') || selected === 'off' || (currentObject === 'gtm' && selected === 'thermo' && !editingStrategy);
+      $('#previewSummary').className = blocked ? 'alert danger' : 'alert success';
+      $('#previewSummary').textContent = summary;
+      $('#explainBox').textContent = explain;
+      $('#conflictBox').className = conflictClass;
+      $('#conflictBox').textContent = conflict;
+      $('#metricPolicy').textContent = blocked ? '阻塞' : conflictClass.includes('warning') ? '需确认' : '通过';
+      $('#operationScope').innerHTML = renderOperationScope();
+      renderStateActionBar(blocked);
+      $('#publishButton').disabled = blocked;
+      updateGtmControls();
+      updateOtaRegionSummary();
+      renderResourceSource();
+    }
+
+    function setRnAudienceMode(mode, refresh = true) {
+      rnAudienceMode = mode;
+      $$("#audienceMode button").forEach(button => {
+        button.classList.toggle("active", button.dataset.mode === mode);
+      });
+      if (currentObject === "rn") {
+        conditions = [];
+      }
+      if (refresh) {
+        renderConditions();
+        updateCreateState();
+      }
+    }
+
+    function scopeLabelText() {
+      if (currentObject === "provision") return "白名单数据中心";
+      if (currentObject === "gtm") return "产品所属数据中心";
+      if (currentObject === "ota") return "OTA 发布地区";
+      return "策略数据中心";
+    }
+
+    function renderImpactTrace(type) {
+      const rows = {
+        provision: [
+          ["现有页面", "产品详情 > 基础信息 > 测试白名单不再独立写入；旧关系迁移为配网入口策略。"],
+          ["技术承接", "历史测试白名单关系需要兼容读取或迁移；新增和编辑统一收敛到发布策略服务，具体接口路径由技术设计定义。"],
+          ["同步结果", "产品详情展示策略摘要并跳转本策略；白名单用户来自白名单资产。"]
+        ],
+        gtm: [
+          ["现有页面", "产品详情直接上架仍是全面放开；GTM 策略负责开发中产品部分放开。"],
+          ["技术承接", "产品详情和产品列表需要补充上架范围与当前 GTM 范围字段；具体接口路径由技术设计定义。"],
+          ["同步结果", "策略发布后产品状态为已上架-部分放开，可继续编辑范围或全面放开。"]
+        ],
+        ota: [
+          ["现有页面", "设备管理 > OTA 就地升级为 OTA 策略；固件管理提供目标固件；设备列表提供设备数据源。"],
+          ["技术承接", "历史 OTA 任务统一转换为策略记录并回填固件、发布地区、状态、进度和安全阈值；具体接口路径由技术设计定义。"],
+          ["同步结果", "策略发布地区在 OTA 策略中维护，实际范围为发布地区 AND 命中条件。"]
+        ],
+        rn: [
+          ["现有页面", "产品详情 > 扩展程序校验原生/RN；扩展程序管理提供产品模块 RN 版本。"],
+          ["技术承接", "扩展程序版本能力需要提供 RN 变体候选、兼容性和当前最新/开发中状态；具体接口路径由技术设计定义。"],
+          ["同步结果", "AB test 只引用 RN 产品模块版本；原生面板产品阻止创建 RN AB。"]
+        ]
+      }[type] || [];
+      return `
+        <div class="impact-panel">
+          <h4>现有页面 / 接口影响</h4>
+          <div class="impact-grid">
+            ${rows.map(([label, value]) => `
+              <div class="impact-item">
+                <div class="impact-label">${label}</div>
+                <div class="impact-value">${value}</div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderResourceSource() {
+      const panel = $("#resourceSourcePanel");
+      if (!panel) return;
+      if (currentObject === "provision") {
+        panel.innerHTML = `
+          <h3 data-step="2">关联资源数据：白名单资产</h3>
+          <div class="source-grid">
+            <div class="source-card">
+              <div class="source-title">运营管理 > 白名单资产</div>
+              <div class="source-meta">原 App > 白名单管理迁移；字段：用户类型、数据中心、账号、标签组</div>
+            </div>
+            <div class="source-card">
+              <div class="source-title">白名单标签组管理</div>
+              <div class="source-meta">当前选择：Seed NA 2026Q2，2 位 beta 用户${hasStrategyImport() ? "；策略导入 100 行" : ""}</div>
+            </div>
+            <div class="source-card">
+              <div class="source-title">alpha 默认测试授权</div>
+              <div class="source-meta">不需要在配网入口策略中重复选择</div>
+            </div>
+          </div>
+          ${renderImpactTrace("provision")}
+          ${renderWhitelistImport()}
+          ${renderWhitelistTable()}
+        `;
+        bindWhitelistImportControls();
+      } else if (currentObject === "gtm") {
+        panel.innerHTML = `
+          <h3 data-step="2">关联资源数据：产品上架状态</h3>
+          <div class="source-grid">
+            <div class="source-card">
+              <div class="source-title">智能产品 > 产品详情</div>
+              <div class="source-meta">当前新建仅展示开发中产品：V3 Dev Pump</div>
+            </div>
+            <div class="source-card">
+              <div class="source-title">发布后产品状态</div>
+              <div class="source-meta">已上架-部分放开；可在同一策略内继续编辑范围</div>
+            </div>
+            <div class="source-card">
+              <div class="source-title">本次策略结果</div>
+              <div class="source-meta">选择部分放开范围，或一键全面放开</div>
+            </div>
+          </div>
+          ${renderImpactTrace("gtm")}
+          <div class="disabled-note">GTM 不使用下方命中过滤条件。上架范围配置本身就是 App 配网入口的可见范围；已上架-部分放开产品请进入已有 GTM 策略编辑。</div>
+        `;
+      } else if (currentObject === "ota") {
+        panel.innerHTML = `
+          <h3 data-step="2">关联资源数据：OTA 任务转换和安全边界</h3>
+          <div class="source-grid">
+            <div class="source-card">
+              <div class="source-title">现有 OTA 任务</div>
+              <div class="source-meta">历史任务转换为 OTA 策略记录；不再维护独立任务列表</div>
+            </div>
+            <div class="source-card">
+              <div class="source-title">发布地区</div>
+              <div class="source-meta">策略内配置：北美、欧洲；支持多区域发布</div>
+            </div>
+            <div class="source-card">
+              <div class="source-title">策略收敛</div>
+              <div class="source-meta">白名单、设备列表、分批比例、地区</div>
+            </div>
+          </div>
+          ${renderImpactTrace("ota")}
+          <div class="alert warning">OTA 策略不展示独立数据中心字段；发布地区、固件和命中过滤条件都在本策略中配置。</div>
+          ${conditions.includes("白名单") ? `<div class="disabled-note">白名单条件引用运营管理 > 白名单资产中的 beta 用户或标签组；alpha 内部测试人员可参与测试，但不计入普通灰度口径。</div>` : ""}
+        `;
+      } else {
+        const rnWhitelist = rnAudienceMode === "whitelist";
+        panel.innerHTML = `
+          <h3 data-step="2">关联资源数据：产品详情 + 扩展程序管理</h3>
+          <div class="source-grid">
+            <div class="source-card">
+              <div class="source-title">产品详情 > 扩展程序</div>
+              <div class="source-meta">控制面板实现方式：RN</div>
+            </div>
+            <div class="source-card">
+              <div class="source-title">App > 扩展程序管理</div>
+              <div class="source-meta">业务类型：产品模块；PanelCode：morn.breast-pump.v3</div>
+            </div>
+            <div class="source-card">
+              <div class="source-title">设备绑定关系</div>
+              <div class="source-meta">绑定用户优先；共享用户跟随设备版本</div>
+            </div>
+          </div>
+          ${renderImpactTrace("rn")}
+          <div class="alert">普通用户 AB 使用流量上限、设备分桶和用户比例；白名单测试从白名单资产选择 beta 用户或标签组；alpha 版本指定是测试覆盖。</div>
+          ${rnWhitelist ? `${renderWhitelistImport()}${renderWhitelistTable()}` : ""}
+        `;
+        if (rnWhitelist) bindWhitelistImportControls();
+      }
+      renderPrototypeAnnotations();
+    }
+
+    function strategyWhitelistRows() {
+      const activeRows = activeWhitelistRows().filter(user => user.dc === '北美数据中心' && ['alpha', 'beta'].includes(user.type));
+      const activeKeys = new Set(activeRows.map(user => whitelistKey(user.account, user.dc)));
+      const pendingRows = hasStrategyImport()
+        ? strategyImportedUsers.filter(user => !activeKeys.has(whitelistKey(user.account, user.dc)))
+        : [];
+      const search = (strategyScopeSearch || '').trim().toLowerCase();
+      const tag = strategyScopeTag || '全部标签组';
+      return [...activeRows, ...pendingRows].filter(user => {
+        const searchMatch = !search || [user.account, user.nickname].filter(Boolean).some(value => value.toLowerCase().includes(search));
+        const tagMatch = tag === '全部标签组' || user.tag === tag || user.pending;
+        return searchMatch && tagMatch;
+      });
+    }
+
+    function renderWhitelistTable() {
+      const visibleUsers = strategyWhitelistRows();
+      const strategyImportKeys = new Set(strategyImportedUsers.map(user => whitelistKey(user.account, user.dc)));
+      const totalPages = Math.max(1, Math.ceil(visibleUsers.length / strategyScopePageSize));
+      strategyScopePage = Math.min(Math.max(1, strategyScopePage), totalPages);
+      const start = (strategyScopePage - 1) * strategyScopePageSize;
+      const pageRows = visibleUsers.slice(start, start + strategyScopePageSize);
+      const rows = pageRows.map(user => {
+        const isAlpha = user.type === 'alpha';
+        const userKey = whitelistKey(user.account, user.dc);
+        const isImportedExisting = hasStrategyImport() && !user.pending && (batchImportExistingAccounts.has(userKey) || strategyImportKeys.has(userKey));
+        const disabled = isAlpha;
+        const reason = isAlpha
+          ? '默认授权'
+          : user.pending
+            ? '发布时新建白名单并授权当前策略'
+            : isImportedExisting
+              ? '导入命中已存在，授权当前策略'
+              : '可授权';
+        return `
+          <div class="source-row">
+            <input type="checkbox" data-strategy-scope-select="${user.id}" ${user.checked || user.pending || isAlpha ? 'checked' : ''} ${disabled ? 'disabled' : ''}>
+            <span title="${user.account}">${user.account}</span>
+            <span>${user.pending ? 'beta / 待新建' : user.type}</span>
+            <span>${user.dc}</span>
+            <span>${reason}</span>
+          </div>
+        `;
+      }).join('');
+      return `
+        <div class="filter-form" style="margin-top: 12px;">
+          <div class="field wide"><label for="strategyScopeSearch">用户模糊搜索</label><input id="strategyScopeSearch" value="${strategyScopeSearch}" placeholder="输入邮箱或昵称"></div>
+          <div class="field"><label for="strategyScopeTag">标签组过滤</label><select id="strategyScopeTag"><option ${strategyScopeTag === '全部标签组' ? 'selected' : ''}>全部标签组</option><option ${strategyScopeTag === 'Seed NA 2026Q2' ? 'selected' : ''}>Seed NA 2026Q2</option><option ${strategyScopeTag === 'Internal QA' ? 'selected' : ''}>Internal QA</option><option ${strategyScopeTag === 'OTA Seed Users' ? 'selected' : ''}>OTA Seed Users</option></select></div>
+          <button class="btn" id="strategyScopeFilter">筛选</button>
+        </div>
+        <div class="source-table">
+          <div class="source-row header-row">
+            <span><input type="checkbox" id="strategyWhitelistSelectAll"></span><span>账号</span><span>用户类型</span><span>数据中心</span><span>授权说明</span>
+          </div>
+          ${rows}
+        </div>
+        <div class="pagination" style="min-height: 48px; padding: 0;">
+          ${renderGenericPagination({
+            total: visibleUsers.length,
+            page: strategyScopePage,
+            pageSize: strategyScopePageSize,
+            start,
+            target: 'strategy-scope',
+            disabledNote: `跨页已选 ${visibleUsers.filter(user => user.checked || user.pending || user.type === 'alpha').length} 人`
+          })}
+        </div>
+      `;
+    }
+
+    function renderWhitelistImport() {
+      const result = hasStrategyImport()
+        ? `<div class="alert success">解析完成：共 ${batchImportStats.total} 位用户，${batchImportStats.existing} 位已存在于白名单资产并授权当前策略，${batchImportStats.fresh} 位不存在，将在发布时创建 beta 白名单用户并授权当前策略；${batchImportStats.alpha} 位 alpha 用户保持默认授权。</div>`
+        : `<div class="disabled-note">支持批量导入账号。导入后先按白名单资产数据做匹配：已存在用户直接授权当前策略，不存在用户作为“待新建 beta 用户”进入发布确认。</div>`;
+      return `
+        <div class="import-box">
+          <div class="import-head">
+            <div>
+              <div class="import-title">批量导入授权用户</div>
+              <div class="source-meta">使用与白名单资产页一致的导入抽屉；本页会增加“发布时新建白名单并授权当前策略”的预授权结果。</div>
+            </div>
+            <button class="btn" id="parseWhitelistImport">打开批量导入抽屉</button>
+          </div>
+          ${result}
+        </div>
+      `;
+    }
+
+    function bindWhitelistImportControls() {
+      const button = $('#parseWhitelistImport');
+      if (button) {
+        button.addEventListener('click', () => openBatchImportDrawer('strategy'));
+      }
+      $('#strategyScopeFilter')?.addEventListener('click', () => {
+        strategyScopeSearch = $('#strategyScopeSearch')?.value || '';
+        strategyScopeTag = $('#strategyScopeTag')?.value || '全部标签组';
+        strategyScopePage = 1;
+        renderResourceSource();
+      });
+      $('#strategyScopeTag')?.addEventListener('change', () => {
+        strategyScopeTag = $('#strategyScopeTag').value;
+        strategyScopePage = 1;
+        renderResourceSource();
+      });
+      const header = $('#strategyWhitelistSelectAll');
+      const visibleUsers = strategyWhitelistRows();
+      const selectable = visibleUsers.filter(user => user.type !== 'alpha' && !user.pending);
+      const selected = selectable.filter(user => user.checked);
+      if (header) {
+        header.checked = selectable.length > 0 && selected.length === selectable.length;
+        header.indeterminate = selected.length > 0 && selected.length < selectable.length;
+        header.addEventListener('change', () => {
+          selectable.forEach(user => { user.checked = header.checked; });
+          renderResourceSource();
+        });
+      }
+      $$('[data-strategy-scope-select]').forEach(input => {
+        input.addEventListener('change', () => {
+          const user = findWhitelistUserById(input.dataset.strategyScopeSelect);
+          if (user) user.checked = input.checked;
+          renderResourceSource();
+        });
+      });
+      bindGenericPagination('[data-strategy-scope-page]', value => {
+        const totalPages = Math.max(1, Math.ceil(strategyWhitelistRows().length / strategyScopePageSize));
+        strategyScopePage = nextPageValue(strategyScopePage, totalPages, value);
+        renderResourceSource();
+      });
+    }
+
+    function openAddUserDrawer() {
+      activeDrawerAnnotationContext = "whitelist-add";
+      activeDrawerStrategyType = null;
+      $("#drawerTitle").textContent = "新增白名单用户";
+      $("#drawerBody").innerHTML = `
+        <div class="drawer-form-grid">
+          <div class="field full">
+            <label for="drawerWhitelistAccount">账号（用户邮箱）</label>
+            <input id="drawerWhitelistAccount" value="new.seed@example.com">
+          </div>
+          <div class="field full">
+            <label for="drawerWhitelistNickname">昵称（选填）</label>
+            <input id="drawerWhitelistNickname" value="">
+            <div class="subline">昵称不参与唯一性判断，可留空。</div>
+          </div>
+          <div class="field">
+            <label for="drawerWhitelistType">用户类型</label>
+            <select id="drawerWhitelistType">
+              <option value="beta">beta / 种子用户</option>
+              <option value="alpha">alpha / 内部测试</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="drawerWhitelistDc">数据中心</label>
+            <select id="drawerWhitelistDc">
+              <option>北美数据中心</option>
+              <option>欧洲数据中心</option>
+              <option>亚太数据中心</option>
+              <option>中国数据中心</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label for="drawerWhitelistTag">标签组</label>
+            <select id="drawerWhitelistTag">
+              <option value="Seed NA 2026Q2">Seed NA 2026Q2 / WG-NA-2026Q2</option>
+              <option value="Internal QA">Internal QA / WG-QA-001</option>
+              <option value="OTA Seed Users">OTA Seed Users / WG-OTA-101</option>
+            </select>
+            <div class="subline">数据来源：现有白名单标签组管理页；单选。</div>
+          </div>
+        </div>
+      `;
+      $("#drawerPrimary").textContent = "保存用户";
+      $("#drawerSecondary").textContent = "取消";
+      drawerPrimaryAction = saveWhitelistUserFromDrawer;
+      drawerSecondaryAction = closeDrawer;
+      $("#drawerMask").classList.add("open");
+      renderPrototypeAnnotations();
+    }
+
+    function saveWhitelistUserFromDrawer() {
+      const account = $("#drawerWhitelistAccount").value.trim();
+      const dc = $("#drawerWhitelistDc").value;
+      if (!account) {
+        showToast("请输入账号。");
+        return;
+      }
+      const existsInSameDc = activeWhitelistRows().some(user => whitelistKey(user.account, user.dc) === whitelistKey(account, dc));
+      if (existsInSameDc) {
+        showToast("该邮箱已存在于当前数据中心；如需跨数据中心授权，请切换数据中心后新增。");
+        return;
+      }
+      whitelistUsers.unshift({
+        id: `u-${Date.now()}`,
+        account,
+        nickname: $("#drawerWhitelistNickname").value.trim(),
+        type: $("#drawerWhitelistType").value,
+        dc,
+        tag: $("#drawerWhitelistTag").value,
+        checked: true,
+        policies: []
+      });
+      whitelistPage = 1;
+      closeDrawer();
+      renderWhitelistAssets();
+      showToast("白名单用户已新增。");
+    }
+
+    function openBatchImportDrawer(context = "asset") {
+      const isStrategyImport = context !== "asset";
+      activeDrawerAnnotationContext = "whitelist-import";
+      activeDrawerStrategyType = null;
+      $("#drawerTitle").textContent = isStrategyImport ? "批量导入授权用户" : "批量导入白名单用户";
+      $("#drawerBody").innerHTML = `
+        <div class="alert">${isStrategyImport ? "策略内导入只做预授权解析：不存在的账号会标记为发布时新建并授权当前策略。" : "白名单资产页导入会直接新建白名单用户。"} 标签组字段填写标签组 ID，标签组列表可从本抽屉下载。</div>
+        <div class="rule-layout">
+          <div class="subpanel">
+            <h3>模板下载</h3>
+            <div class="detail-list">
+              <dt>账号（用户邮箱）</dt><dd>文本</dd>
+              <dt>昵称</dt><dd>选填，文本</dd>
+              <dt>用户类型</dt><dd>单选：alpha / beta</dd>
+              <dt>数据中心</dt><dd>北美、欧洲、亚太、中国数据中心</dd>
+              <dt>标签组（ID）</dt><dd>文本</dd>
+            </div>
+            <button class="btn" id="downloadImportTemplate" style="margin-top: 12px;">下载导入模板</button>
+          </div>
+          <div class="subpanel">
+            <h3>白名单标签组列表</h3>
+            <div class="source-table">
+              <div class="source-row header-row" style="grid-template-columns: 1fr 1fr;"><span>标签组名称</span><span>标签组ID</span></div>
+              <div class="source-row" style="grid-template-columns: 1fr 1fr;"><span>Seed NA 2026Q2</span><span>WG-NA-2026Q2</span></div>
+              <div class="source-row" style="grid-template-columns: 1fr 1fr;"><span>Internal QA</span><span>WG-QA-001</span></div>
+              <div class="source-row" style="grid-template-columns: 1fr 1fr;"><span>OTA Seed Users</span><span>WG-OTA-101</span></div>
+            </div>
+            <button class="btn" id="downloadTagGroups" style="margin-top: 12px;">下载标签组列表</button>
+          </div>
+        </div>
+        <div class="subpanel">
+          <h3>导入文件</h3>
+          <input type="file" id="importFile">
+          <div class="subline">支持 .xlsx / .csv。点击导入后进入同步处理进度弹窗，处理完成前不可离开。</div>
+        </div>
+      `;
+      $("#drawerPrimary").textContent = "导入";
+      $("#drawerSecondary").textContent = "关闭";
+      drawerPrimaryAction = () => runBatchImport(context);
+      drawerSecondaryAction = closeDrawer;
+      $("#drawerMask .drawer").classList.add("wide");
+      $("#drawerMask").classList.add("open");
+      $("#downloadImportTemplate").addEventListener("click", () => showToast("已生成模板：账号、昵称、用户类型、数据中心、标签组ID。"));
+      $("#downloadTagGroups").addEventListener("click", () => showToast("已生成白名单标签组列表：标签组名称、标签组ID。"));
+      renderPrototypeAnnotations();
+    }
+
+    function runBatchImport(context) {
+      const normalizedContext = context === "asset" ? "asset" : "strategy";
+      activeModalAnnotationContext = "import-progress";
+      $("#progressMask").classList.add("open");
+      renderPrototypeAnnotations();
+      window.setTimeout(() => {
+        $("#progressMask").classList.remove("open");
+        activeModalAnnotationContext = null;
+        importBatchParsed = true;
+        importBatchContext = normalizedContext;
+        if (normalizedContext === "asset") {
+          assetImportedUsers = cloneBatchImportUsers("asset");
+        } else {
+          strategyImportedUsers = cloneBatchImportUsers("strategy");
+        }
+        whitelistPage = 1;
+        strategyScopePage = 1;
+        renderWhitelistAssets();
+        renderResourceSource();
+        updateCreateState();
+        renderBatchImportResult(normalizedContext);
+      }, 900);
+    }
+
+    function renderBatchImportResult(context) {
+      const isStrategyImport = context === "strategy";
+      activeDrawerAnnotationContext = "import-result";
+      activeDrawerStrategyType = null;
+      $("#drawerTitle").textContent = "导入结果";
+      $("#drawerBody").innerHTML = `
+        <div class="metric-grid">
+          <div class="metric"><div class="metric-value">96</div><div class="metric-label">成功数量</div></div>
+          <div class="metric"><div class="metric-value">4</div><div class="metric-label">失败数量</div></div>
+        </div>
+        <div class="alert success">${isStrategyImport ? "成功用户会进入预授权列表：已存在用户授权当前策略；不存在用户发布时新建白名单并授权当前策略。" : "成功用户已直接新建为白名单资产用户，可在列表中编辑类型或查看授权。"}</div>
+        <div class="table-wrap" style="border: 1px solid var(--el-border-color-lighter);">
+          <table>
+            <thead><tr><th>行号</th><th>账号</th><th>失败原因</th></tr></thead>
+            <tbody>
+              <tr><td>12</td><td>bad-email</td><td>账号格式不是邮箱</td></tr>
+              <tr><td>23</td><td>seed.old@example.com</td><td>标签组 ID 不存在</td></tr>
+              <tr><td>41</td><td>qa.user@example.com</td><td>用户类型不在 alpha/beta 枚举中</td></tr>
+              <tr><td>88</td><td>trial@example.com</td><td>数据中心不在可选范围内</td></tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+      $("#drawerPrimary").textContent = "完成";
+      $("#drawerSecondary").textContent = "导出失败列表";
+      drawerPrimaryAction = () => {
+        closeDrawer();
+        showToast("导入完成，列表已更新。");
+      };
+      drawerSecondaryAction = () => showToast("已导出失败列表。");
+      renderPrototypeAnnotations();
+    }
+
+    function applyBatchType() {
+      const checkedUsers = filteredWhitelistRows().filter(user => user.checked);
+      if (!checkedUsers.length) {
+        showToast("请先勾选需要编辑的用户。");
+        return;
+      }
+      const targetType = $("#batchTypeSelect").value;
+      checkedUsers.forEach(user => { user.type = targetType; });
+      renderWhitelistAssets();
+      showToast(`已将 ${checkedUsers.length} 位用户设为 ${typeLabel(targetType)}。`);
+    }
+
+    function openWhitelistDeleteConfirm(ids) {
+      const idSet = new Set(ids);
+      const users = activeWhitelistRows().filter(user => idSet.has(user.id));
+      if (!users.length) {
+        showToast("请先选择需要删除的白名单用户。");
+        return;
+      }
+      pendingWhitelistDeleteIds = users.map(user => user.id);
+      const policyCount = users.reduce((count, user) => count + (user.policies || []).length, 0);
+      $("#deleteWhitelistTitle").textContent = users.length > 1 ? `批量删除白名单用户（${users.length} 人）` : "删除白名单用户";
+      $("#deleteWhitelistSummary").innerHTML = users.length === 1
+        ? `<strong>${users[0].account}</strong><div class="subline">数据中心：${users[0].dc}；用户类型：${typeLabel(users[0].type)}；标签组：${users[0].tag}</div>`
+        : `<strong>将删除 ${users.length} 位白名单用户</strong><div class="subline">${users.slice(0, 3).map(user => `${user.account} / ${user.dc}`).join("；")}${users.length > 3 ? "；等" : ""}</div>`;
+      $("#deleteWhitelistImpact").textContent = policyCount
+        ? `所选用户当前关联 ${policyCount} 条授权策略。删除后将从白名单资产移除，并停止通过这些白名单授权命中；历史策略记录保留用于追溯。`
+        : "所选用户暂无授权策略。删除后将从白名单资产移除。";
+      activeModalAnnotationContext = "whitelist-delete";
+      $("#deleteWhitelistMask").classList.add("open");
+      renderPrototypeAnnotations();
+    }
+
+    function closeWhitelistDeleteConfirm() {
+      pendingWhitelistDeleteIds = [];
+      $("#deleteWhitelistMask").classList.remove("open");
+      activeModalAnnotationContext = null;
+      renderPrototypeAnnotations();
+    }
+
+    function removeUsersFromList(list, ids) {
+      let removed = 0;
+      for (let index = list.length - 1; index >= 0; index -= 1) {
+        if (ids.has(list[index].id)) {
+          list.splice(index, 1);
+          removed += 1;
+        }
+      }
+      return removed;
+    }
+
+    function confirmWhitelistDelete() {
+      const ids = new Set(pendingWhitelistDeleteIds);
+      if (!ids.size) {
+        closeWhitelistDeleteConfirm();
+        return;
+      }
+      const removed = removeUsersFromList(whitelistUsers, ids) + removeUsersFromList(assetImportedUsers, ids);
+      const remainingRows = filteredWhitelistRows();
+      const totalPages = Math.max(1, Math.ceil(remainingRows.length / whitelistPageSize));
+      whitelistPage = Math.min(whitelistPage, totalPages);
+      if (ids.has(selectedWhitelistId)) {
+        selectedWhitelistId = activeWhitelistRows()[0]?.id || "";
+      }
+      closeWhitelistDeleteConfirm();
+      renderWhitelistAssets();
+      renderResourceSource();
+      showToast(`已删除 ${removed} 位白名单用户。`);
+    }
+
+    function renderConditions() {
+      const config = effectiveConditionConfig();
+      const hideConditionPanel = !config.defaultConditions.length && !config.addEnabled;
+      const finalStep = hideConditionPanel ? "4" : "5";
+      $("#conditionRuleLayout").classList.toggle("no-condition", hideConditionPanel);
+      $("#conditionRuleLayout").classList.toggle("hide", hideConditionPanel);
+      $("#conditionPanel").classList.toggle("hide", hideConditionPanel);
+      $("#conditionSectionTitle").textContent = currentObject === "provision" ? "策略用户范围" : currentObject === "gtm" ? "上架范围校验" : "命中条件配置";
+      $("#previewTitle").dataset.step = finalStep;
+      $("#duplicateAlert").classList.add("hide");
+      $("#conditionList").innerHTML = conditions.length ? conditions.map(type => `
+        <div class="condition-row">
+          <div class="condition-main">
+            <strong>${type}</strong>
+            <div class="subline">${conditionText(type)}</div>
+            ${conditionConfigHtml(type)}
+          </div>
+          ${config.removable ? `<button class="btn link" data-remove-condition="${type}">移除</button>` : `<span class="tag blue">固定</span>`}
+        </div>
+      `).join("") : `<div class="disabled-note">当前发布对象不使用命中过滤条件。</div>`;
+      $$("[data-remove-condition]").forEach(button => {
+        button.addEventListener("click", () => {
+          conditions = conditions.filter(item => item !== button.dataset.removeCondition);
+          renderConditions();
+          updateCreateState();
+        });
+      });
+      $$("[data-config-condition]").forEach(button => {
+        button.addEventListener("click", () => showToast(`${button.dataset.configCondition}配置入口已打开。`));
+      });
+      $$("[data-ota-whitelist-mode]").forEach(select => {
+        select.addEventListener("change", () => {
+          otaWhitelistMode = select.value;
+          renderConditions();
+          updateCreateState();
+        });
+      });
+      $$("[data-ota-region-mode]").forEach(select => {
+        select.addEventListener("change", () => {
+          otaRegionConditionMode = select.value;
+          renderConditions();
+          updateCreateState();
+        });
+      });
+      $$("[data-ota-batch-limit-mode]").forEach(select => {
+        select.addEventListener("change", () => {
+          otaBatchLimitMode = select.value;
+          renderConditions();
+          updateCreateState();
+        });
+      });
+      $("#conditionSelect").innerHTML = config.options.length
+        ? config.options.map(option => `<option value="${option}" ${conditions.includes(option) ? "disabled" : ""}>${option}</option>`).join("")
+        : `<option value="">无可添加条件</option>`;
+      $("#conditionSelect").disabled = !config.addEnabled;
+      $("#addCondition").disabled = !config.addEnabled;
+      $("#addConditionBox").classList.toggle("hide", !config.addEnabled);
+      $("#conditionToolbar").classList.toggle("locked", !config.logicEnabled);
+      $("#conditionPolicyNote").textContent = config.note;
+      $("#logicToggle").style.opacity = config.logicEnabled ? "1" : ".45";
+      $$("#logicToggle button").forEach(button => button.disabled = !config.logicEnabled);
+      renderPrototypeAnnotations();
+    }
+
+    function conditionConfigHtml(type) {
+      if (currentObject !== 'ota') return '';
+      const configs = {
+        '白名单': `
+          <div class="condition-config">
+            <div class="field">
+              <label for="otaWhitelistMode">授权方式</label>
+              <select id="otaWhitelistMode" data-ota-whitelist-mode>
+                <option value="tag" ${otaWhitelistMode === 'tag' ? 'selected' : ''}>选择 beta 标签组</option>
+                <option value="user" ${otaWhitelistMode === 'user' ? 'selected' : ''}>选择指定 beta 用户</option>
+                <option value="import" ${otaWhitelistMode === 'import' ? 'selected' : ''}>批量导入 beta 用户</option>
+              </select>
+            </div>
+            ${otaWhitelistConfigHtml()}
+            <div class="config-note">入口：选择或导入白名单 beta 用户；alpha 内部测试人员只作为测试覆盖，不计入普通灰度口径。</div>
+          </div>`,
+        '设备列表': `
+          <div class="condition-config">
+            <div class="field wide">
+              <label>设备 ID 清单</label>
+              <input value="M9P0-00031, M9P0-00092, M9P0-00108">
+            </div>
+            <div class="field">
+              <label>导入方式</label>
+              <button class="btn" data-config-condition="设备列表">导入设备列表</button>
+            </div>
+            <div class="field">
+              <label>命中口径</label>
+              <div class="readonly-field">设备绑定用户可见</div>
+            </div>
+          </div>`,
+        '分批比例': `
+          <div class="condition-config">
+            <div class="field"><label>每批比例</label><select><option>10%</option><option>20%</option><option>25%</option></select></div>
+            <div class="field"><label>预计批次</label><div class="readonly-field">10 批完成 100%</div></div>
+            <div class="field"><label>批次间隔</label><select><option>24 小时</option><option>12 小时</option><option>手动推进</option></select></div>
+            <div class="field">
+              <label for="otaBatchLimitMode">单批上线台数限制</label>
+              <select id="otaBatchLimitMode" data-ota-batch-limit-mode>
+                <option value="limited" ${otaBatchLimitMode === 'limited' ? 'selected' : ''}>限制单批上线台数</option>
+                <option value="unlimited" ${otaBatchLimitMode === 'unlimited' ? 'selected' : ''}>不限制单批上线台数</option>
+              </select>
+            </div>
+            ${otaBatchLimitConfigHtml()}
+            <div class="config-note">适用于成熟固件分批次全量发布：总计 100%，每批按比例推进；单批上线台数可限制，也可不限制。</div>
+          </div>`,
+        '地区': `
+          <div class="condition-config">
+            <div class="field">
+              <label for="otaRegionConditionMode">地区模式</label>
+              <select id="otaRegionConditionMode" data-ota-region-mode>
+                <option value="dataCenter" ${otaRegionConditionMode === 'dataCenter' ? 'selected' : ''}>数据中心</option>
+                <option value="country" ${otaRegionConditionMode === 'country' ? 'selected' : ''}>国家/地区</option>
+              </select>
+            </div>
+            ${otaRegionConfigHtml()}
+            <div class="config-note">地区条件会与上方“发布地区”求交集；超出发布地区时不阻断发布，最终 OTA 只按交集范围执行。</div>
+          </div>`
+      };
+      return configs[type] || '';
+    }
+
+    function otaWhitelistConfigHtml() {
+      if (otaWhitelistMode === 'user') {
+        return `<div class="field wide"><label>指定 beta 用户</label><input value="seed.user@example.com, mother.panel@example.com"></div><div class="field"><label>选择入口</label><button class="btn" data-config-condition="白名单用户">选择白名单用户</button></div><div class="field"><label>已选用户</label><div class="readonly-field">2 人，均来自白名单资产</div></div>`;
+      }
+      if (otaWhitelistMode === 'import') {
+        return `<div class="field"><label>导入入口</label><button class="btn" data-config-condition="批量导入 beta 用户">批量导入授权用户</button></div><div class="field"><label>解析结果</label><div class="readonly-field">82 已存在，18 待新建并授权</div></div>`;
+      }
+      return `<div class="field"><label>白名单标签组</label><select><option>OTA Seed Users / 82 人</option><option>Seed NA 2026Q2 / 2 人</option></select></div><div class="field"><label>标签组来源</label><div class="readonly-field">白名单标签组管理页</div></div>`;
+    }
+
+    function otaBatchLimitConfigHtml() {
+      if (otaBatchLimitMode === 'unlimited') {
+        return `<div class="field"><label>单批上线台数</label><div class="readonly-field">不限制</div></div>`;
+      }
+      return `<div class="field"><label>单批上线台数</label><input value="1,000 台设备"></div>`;
+    }
+
+    function otaRegionConfigHtml() {
+      if (otaRegionConditionMode === 'country') {
+        return `<div class="field wide"><label>国家/地区范围</label><div class="tree-list"><label class="tree-item"><input type="checkbox" checked> 北美洲</label><label class="tree-item tree-child"><input type="checkbox" checked> 美国</label><label class="tree-item tree-child"><input type="checkbox" checked> 加拿大</label><label class="tree-item"><input type="checkbox" checked> 欧洲</label><label class="tree-item tree-child"><input type="checkbox"> 德国</label><label class="tree-item tree-child"><input type="checkbox"> 法国</label></div></div>`;
+      }
+      return `<div class="field wide"><label>数据中心范围</label><div class="multi-check-grid"><label class="multi-check-item"><input type="checkbox" checked> 北美数据中心</label><label class="multi-check-item"><input type="checkbox" checked> 欧洲数据中心</label><label class="multi-check-item"><input type="checkbox"> 亚太数据中心</label><label class="multi-check-item"><input type="checkbox"> 中国数据中心</label></div></div>`;
+    }
+
+    function conditionText(type) {
+      if (currentObject === "ota") {
+        const otaMap = {
+          "白名单": "选择 beta 白名单用户或标签组；命中用户可发现新版本固件",
+          "设备列表": "选择指定设备；设备绑定用户可发现新版本固件",
+          "地区": "在发布地区边界内按数据中心或国家/地区继续收敛",
+          "分批比例": "按比例批次执行 OTA，先到先得；总计 100% 需要规划批次数，单批上线台数可限制或不限制"
+        };
+        return otaMap[type] || "条件值";
+      }
+      const map = {
+        "白名单": "来自运营管理 > 白名单资产；可选择 beta 用户或标签组；alpha 默认授权，不在这里选择",
+        "设备列表": "设备 ID 清单；RN AB 以设备稳定分桶",
+        "地区": "按数据中心或国家/地区选择范围，设备登录 IP 绑定用户可见",
+        "分批比例": "按比例批次执行 OTA，先到先得；不做 OTA AB test",
+        "用户比例": "A 50% / B 50%，已上架 RN 面板普通用户 AB；同时受流量上限控制"
+      };
+      return map[type] || "条件值";
+    }
+
+    function addCondition() {
+      const value = $("#conditionSelect").value;
+      const config = effectiveConditionConfig();
+      if (!value || conditions.includes(value) || !config.options.includes(value)) {
+        $("#duplicateAlert").classList.remove("hide");
+        return;
+      }
+      $("#duplicateAlert").classList.add("hide");
+      conditions.push(value);
+      renderConditions();
+      updateCreateState();
+    }
+
+    function effectiveConditionConfig() {
+      if (currentObject !== "rn") return objectConditionConfig[currentObject];
+      return {
+        defaultConditions: [],
+        options: [],
+        note: "AB test 不使用额外命中条件；受众模式决定用户范围，先按流量上限圈定实验设备，再按用户比例和设备稳定分桶分发变体。",
+        logicEnabled: false,
+        addEnabled: false,
+        removable: false
+      };
+    }
+
+    function activeWhitelistRows() {
+      return [...whitelistUsers, ...assetImportedUsers];
+    }
+
+    function filteredWhitelistRows() {
+      const rows = activeWhitelistRows();
+      const dc = $("#whitelistFilterDc")?.value || "全部";
+      const type = $("#whitelistFilterType")?.value || "全部";
+      const tag = $("#whitelistFilterTag")?.value || "全部标签组";
+      const keyword = ($("#whitelistFilterKeyword")?.value || "").trim().toLowerCase();
+      return rows.filter(user => {
+        const dcMatch = dc === "全部" || user.dc === dc;
+        const typeMatch = type === "全部" || user.type === type;
+        const tagMatch = tag === "全部标签组" || user.tag === tag;
+        const keywordMatch = !keyword || [user.account, user.nickname].filter(Boolean).some(value => value.toLowerCase().includes(keyword));
+        return dcMatch && typeMatch && tagMatch && keywordMatch;
+      });
+    }
+
+    function whitelistPageState() {
+      const rows = filteredWhitelistRows();
+      const totalPages = Math.max(1, Math.ceil(rows.length / whitelistPageSize));
+      whitelistPage = Math.min(Math.max(1, whitelistPage), totalPages);
+      const start = (whitelistPage - 1) * whitelistPageSize;
+      return {
+        rows,
+        pageRows: rows.slice(start, start + whitelistPageSize),
+        totalPages,
+        start
+      };
+    }
+
+    function findWhitelistUserById(id) {
+      return [...whitelistUsers, ...assetImportedUsers, ...strategyImportedUsers].find(user => user.id === id);
+    }
+
+    function typeLabel(type) {
+      return type === "alpha" ? "alpha / 内部测试" : "beta / 种子用户";
+    }
+
+    function policySummary(user) {
+      if (user.pending) {
+        return `<span class="tag orange">待新建并授权当前策略</span>`;
+      }
+      const policies = user.policies || [];
+      if (!policies.length) return `<span class="muted">暂无策略授权</span>`;
+      const chips = policies.slice(0, 2).map(policy => `<span class="tag blue">${policy.type}: ${policy.name}</span>`).join("");
+      const more = policies.length > 2 ? `<span class="tag">等 ${policies.length} 条</span>` : "";
+      return `<div class="policy-stack">${chips}${more}</div>`;
+    }
+
+    function renderWhitelistAssets() {
+      const { rows, pageRows, totalPages, start } = whitelistPageState();
+      $("#whitelistAssetRows").innerHTML = pageRows.length ? pageRows.map(user => `
+        <tr>
+          <td><input type="checkbox" data-user-select="${user.id}" ${user.checked ? "checked" : ""}></td>
+          <td>
+            <strong>${user.account}</strong>
+            ${user.nickname ? `<div class="subline">昵称：${user.nickname}</div>` : ""}
+            <div class="subline">${user.pending ? "批量导入准备新建" : user.imported ? "批量导入已新建" : "来自白名单资产"}</div>
+          </td>
+          <td>
+            <select class="inline-select" data-user-type="${user.id}">
+              <option value="beta" ${user.type === "beta" ? "selected" : ""}>beta / 种子用户</option>
+              <option value="alpha" ${user.type === "alpha" ? "selected" : ""}>alpha / 内部测试</option>
+            </select>
+          </td>
+          <td>${user.dc}</td>
+          <td>${user.tag}</td>
+          <td>${policySummary(user)}</td>
+          <td>
+            <div class="action-group asset-row-actions">
+              <button class="btn link" data-asset-lookup="${user.id}">查看授权</button>
+              <button class="btn link danger" data-delete-user="${user.id}">删除</button>
+            </div>
+          </td>
+          <td>
+            ${user.type === "alpha"
+              ? `<span class="muted">默认授权 / AB 覆盖</span>`
+              : `<div class="action-group">
+                  <button class="btn action-btn" data-asset-use="provision" data-account="${user.account}">配网</button>
+                  <button class="btn action-btn" data-asset-use="ota" data-account="${user.account}">OTA</button>
+                  <button class="btn action-btn" data-asset-use="ab" data-account="${user.account}">AB test</button>
+                </div>`}
+          </td>
+        </tr>
+      `).join("") : `<tr><td colspan="8"><span class="muted">暂无符合条件的白名单用户</span></td></tr>`;
+      $("#selectAllWhitelist").checked = pageRows.length > 0 && pageRows.every(user => user.checked);
+      $("#selectAllWhitelist").indeterminate = pageRows.some(user => user.checked) && !pageRows.every(user => user.checked);
+      $("#whitelistSelectedSummary").textContent = `跨页已选 ${rows.filter(user => user.checked).length} 人`;
+      $("#whitelistPagination").innerHTML = renderWhitelistPagination(rows, totalPages, start);
+      $$("[data-whitelist-page]").forEach(button => {
+        button.addEventListener("click", () => {
+          const target = button.dataset.whitelistPage;
+          if (target === "prev") whitelistPage -= 1;
+          if (target === "next") whitelistPage += 1;
+          if (!Number.isNaN(Number(target))) whitelistPage = Number(target);
+          renderWhitelistAssets();
+        });
+      });
+      $$("[data-user-select]").forEach(input => {
+        input.addEventListener("change", () => {
+          const user = findWhitelistUserById(input.dataset.userSelect);
+          if (user) user.checked = input.checked;
+          renderWhitelistAssets();
+        });
+      });
+      $$("[data-user-type]").forEach(select => {
+        select.addEventListener("change", () => {
+          const user = findWhitelistUserById(select.dataset.userType);
+          if (!user) return;
+          user.type = select.value;
+          renderWhitelistAssets();
+          showToast(`${user.account} 已更新为 ${typeLabel(user.type)}。`);
+        });
+      });
+      $$("[data-asset-lookup]").forEach(button => {
+        button.addEventListener("click", () => {
+          selectedWhitelistId = button.dataset.assetLookup;
+          whitelistAuthorizationPage = 1;
+          setView("whitelistDetailView");
+        });
+      });
+      $$("[data-asset-use]").forEach(button => {
+        button.addEventListener("click", () => {
+          startStrategyWithAsset(button.dataset.assetUse, button.dataset.account);
+        });
+      });
+      $$("[data-delete-user]").forEach(button => {
+        button.addEventListener("click", () => openWhitelistDeleteConfirm([button.dataset.deleteUser]));
+      });
+      renderPrototypeAnnotations();
+    }
+
+    function renderWhitelistPagination(rows, totalPages, start) {
+      const selectedCount = rows.filter(user => user.checked).length;
+      const pageButtons = Array.from({ length: totalPages }, (_, index) => {
+        const page = index + 1;
+        return `<button class="btn ${page === whitelistPage ? "active" : ""}" data-whitelist-page="${page}">${page}</button>`;
+      }).join("");
+      const from = rows.length ? start + 1 : 0;
+      const to = Math.min(start + whitelistPageSize, rows.length);
+      return `
+        <span>共 ${rows.length} 条</span>
+        <span>${whitelistPageSize}条/页</span>
+        <span>当前 ${from}-${to}</span>
+        <span>跨页已选 ${selectedCount} 人</span>
+        <button class="btn" data-whitelist-page="prev" ${whitelistPage === 1 ? "disabled" : ""}>上一页</button>
+        ${pageButtons}
+        <button class="btn" data-whitelist-page="next" ${whitelistPage === totalPages ? "disabled" : ""}>下一页</button>
+        <span>不提供导出</span>
+      `;
+    }
+
+    function renderWhitelistAuthorizationDetail() {
+      const user = findWhitelistUserById(selectedWhitelistId) || activeWhitelistRows()[0];
+      const policies = user.policies || [];
+      const totalPages = Math.max(1, Math.ceil(policies.length / whitelistAuthorizationPageSize));
+      whitelistAuthorizationPage = Math.min(Math.max(1, whitelistAuthorizationPage), totalPages);
+      const start = (whitelistAuthorizationPage - 1) * whitelistAuthorizationPageSize;
+      const pagePolicies = policies.slice(start, start + whitelistAuthorizationPageSize);
+      $("#whitelistDetailTitle").textContent = `白名单授权详情：${user.account}`;
+      $("#whitelistDetailSummary").innerHTML = `
+        <div class="summary-item"><span>用户类型</span><strong>${typeLabel(user.type)}</strong></div>
+        <div class="summary-item"><span>数据中心</span><strong>${user.dc}</strong></div>
+        <div class="summary-item"><span>标签组</span><strong>${user.tag}</strong></div>
+        <div class="summary-item"><span>授权策略</span><strong>${user.pending ? "待发布授权" : `${policies.length} 条`}</strong></div>
+      `;
+      $("#whitelistAuthorizationRows").innerHTML = user.pending
+        ? `<tr><td colspan="7"><strong>发布时新建白名单并授权当前策略</strong><div class="subline">该账号来自批量导入解析结果，当前还没有历史授权策略。</div></td></tr>`
+        : pagePolicies.map(policy => `
+          <tr>
+            <td><strong>${policy.name}</strong><div class="subline">只展示白名单用户授权，不展示普通用户随机命中结果</div></td>
+            <td><span class="tag blue">${policy.type}</span></td>
+            <td>${policy.product}</td>
+            <td>${policy.source}</td>
+            <td><span class="tag ${policy.tagClass}">${policy.status}</span></td>
+            <td>${policy.expire}</td>
+            <td><button class="btn link" data-policy-open="${policy.type}">查看策略</button></td>
+          </tr>
+        `).join("");
+      $("#whitelistAuthorizationPagination").innerHTML = renderGenericPagination({
+        total: user.pending ? 1 : policies.length,
+        page: whitelistAuthorizationPage,
+        pageSize: whitelistAuthorizationPageSize,
+        start: user.pending ? 0 : start,
+        target: "whitelist-authorization",
+        disabledNote: "无导出入口"
+      });
+      bindGenericPagination("[data-whitelist-authorization-page]", value => {
+        whitelistAuthorizationPage = nextPageValue(whitelistAuthorizationPage, totalPages, value);
+        renderWhitelistAuthorizationDetail();
+      });
+      $$("[data-policy-open]").forEach(button => {
+        button.addEventListener("click", () => {
+          const target = button.dataset.policyOpen === "OTA" ? "otaMenu" : button.dataset.policyOpen === "AB test" ? "abMenu" : "provisionMenu";
+          setModule(target);
+          showToast("已跳转到对应策略列表，普通用户命中结果请在策略详情中查看。");
+        });
+      });
+      renderPrototypeAnnotations();
+    }
+
+    function startStrategyWithAsset(target, account) {
+      if (target === "provision") {
+        setModule("provisionMenu", false);
+        setObject("provision");
+      } else if (target === "ota") {
+        setModule("otaMenu", false);
+        setObject("ota");
+      } else {
+        setModule("abMenu", false);
+        setObject("rn");
+        setRnAudienceMode("whitelist", false);
+        conditions = [];
+        renderConditions();
+      }
+      setView("createView");
+      updateCreateState();
+      showToast(`已引用 ${account}，进入${menuModules[currentModule].title}创建页。`);
+    }
+
+    function buildPublishedStrategy() {
+      const product = $("#productSelect").selectedOptions[0].textContent.split(" / ")[0];
+      const name = $("#strategyName").value.trim() || "未命名发布策略";
+      const now = formatNow();
+      if (currentObject === "provision") {
+        return {
+          name,
+          type: "配网入口",
+          product,
+          productState: "开发中",
+          audience: hasStrategyImport() ? "白名单 beta + 批量导入 100 行；alpha 默认授权" : "白名单 beta 种子用户；alpha 默认授权",
+          owner: "Product Ops",
+          dc: "北美数据中心",
+          version: "配网入口可见",
+          risk: "运行中",
+          riskTag: "green",
+          start: now,
+          detail: {
+            "数据来源": "运营管理 > 白名单资产，支持批量导入",
+            "导入处理": hasStrategyImport() ? "已存在用户授权当前策略；不存在用户发布时新建 beta 白名单用户并授权当前策略" : "未使用批量导入",
+            "授权口径": "只授权 beta 种子用户；alpha 内部测试人员默认授权",
+            "不支持项": "用户比例、GTM 地区发布、AB test、设备列表"
+          }
+        };
+      }
+      if (currentObject === "gtm") {
+        const releaseMode = $("#gtmReleaseMode")?.value || "部分放开";
+        const rangeMode = $("#gtmRangeMode")?.value || "国家/地区";
+        const fullOpen = releaseMode === "全面放开";
+        return {
+          name,
+          type: "GTM",
+          product,
+          productState: fullOpen ? "已上架-全面放开" : "已上架-部分放开",
+          owner: "GTM Ops",
+          dc: fullOpen ? "全部数据中心" : "北美数据中心",
+          audience: fullOpen ? "全面放开：所有 App 用户可发现" : `上架范围：${rangeMode === "数据中心" ? "北美数据中心" : "美国、加拿大"}；本次动作：部分放开范围`,
+          version: "配网入口商业化可见",
+          risk: "运行中",
+          riskTag: "green",
+          start: now,
+          detail: {
+            "上架范围": fullOpen ? "全面放开" : "GTM 范围就是命中范围",
+            "判断方式": fullOpen ? "不需要范围配置" : rangeMode,
+            "本次动作": fullOpen ? "一键全面放开" : "部分放开范围"
+          }
+        };
+      }
+      if (currentObject === "ota") {
+        return {
+          name,
+          type: "OTA",
+          product,
+          productState: "已上架-全面放开",
+          audience: "OTA 发布地区北美、欧洲 AND 策略条件",
+          owner: "Firmware Ops",
+          dc: "多区域",
+          version: "FW 1.2.0 / M9P0",
+          risk: "运行中",
+          riskTag: "green",
+          start: now,
+          detail: {
+            "OTA 发布地区": "北美、欧洲",
+            "策略条件": conditions.join(` ${conditionLogic} `),
+            "安全阈值": "失败率 3%，成功率 96%，下载峰值 1200 req/min"
+          }
+        };
+      }
+      const trafficCapText = $("#trafficCap")?.value || "最多 10% 可触达设备 / 1,000 台";
+      const bucketRatioText = $("#bucketRatio")?.value || "A 50% / B 50%";
+      return {
+        name,
+        type: "RN 面板",
+        product,
+        productState: product === "V3 Dev Pump" ? "开发中" : "已上架-全面放开",
+        audience: rnAudienceMode === "whitelist" ? "白名单 beta 测试；alpha 测试覆盖" : `普通用户 AB；${trafficCapText}；设备分桶；alpha 可指定 A/B`,
+        owner: "UX Research",
+        dc: "北美数据中心",
+        version: "A: 1.0.0 / B: 1.1.0",
+        risk: "运行中",
+        riskTag: "green",
+        start: now,
+        detail: {
+          "控制面板": "RN，资源来自扩展程序管理 / 产品模块",
+          "受众模式": rnAudienceMode === "whitelist" ? "白名单测试" : "普通用户 AB",
+          "流量上限": rnAudienceMode === "whitelist" ? "白名单用户范围内生效" : trafficCapText,
+          "用户比例": bucketRatioText,
+          "到期关闭": $("#expirePolicy")?.value || "收敛到 A",
+          "共享规则": "绑定用户命中 A，共享用户命中 B 时，设备最终使用 A",
+          "测试覆盖": "alpha 用户可指定 A、B 或跟随默认命中"
+        }
+      };
+    }
+
+    function publishStrategy() {
+      if ($("#publishButton").disabled) return;
+      const strategy = buildPublishedStrategy();
+      if (editingStrategy) {
+        Object.assign(editingStrategy, strategy, { risk: editingStrategy.risk, riskTag: statusClass(editingStrategy) });
+        showToast("策略已保存，已更新列表。");
+      } else {
+        strategies.unshift(strategy);
+        showToast("发布策略成功，已跳转到策略列表并更新最新策略。");
+      }
+      $("#filterType").value = "全部";
+      $("#filterStatus").value = "全部";
+      $("#filterProduct").value = "全部产品";
+      $("#filterProductState").value = "全部状态";
+      $("#filterOwner").value = "全部负责人";
+      $("#filterDc").value = "全部数据中心";
+      $("#filterKeyword").value = "";
+      strategyPage = 1;
+      renderStrategyFilterOptions(menuModules[currentModule]);
+      renderStrategies();
+      setView("listView");
+      editingStrategy = null;
+    }
+
+    function saveDraftStrategy() {
+      if (editingStrategy) return;
+      const strategy = {
+        ...buildPublishedStrategy(),
+        risk: "草稿",
+        riskTag: strategyStates["草稿"].tag,
+        start: formatNow()
+      };
+      strategies.unshift(strategy);
+      $("#filterType").value = "全部";
+      $("#filterStatus").value = "全部";
+      $("#filterProduct").value = "全部产品";
+      $("#filterProductState").value = "全部状态";
+      $("#filterOwner").value = "全部负责人";
+      $("#filterDc").value = "全部数据中心";
+      $("#filterKeyword").value = "";
+      strategyPage = 1;
+      renderStrategyFilterOptions(menuModules[currentModule]);
+      renderStrategies();
+      setView("listView");
+      showToast("已保存为草稿，已跳转到策略列表。");
+    }
+
+    function openImpactDemoDrawer() {
+      activeDrawerAnnotationContext = 'impact-demo';
+      activeDrawerStrategyType = null;
+      $('#drawerTitle').textContent = '关联页面与权限示意';
+      $('#drawerBody').innerHTML = `
+        <div class="subpanel">
+          <h3>产品详情直接上架</h3>
+          <div class="detail-list">
+            <dt>原页面</dt><dd>智能产品 > 产品详情 > 基础信息</dd>
+            <dt>当前动作</dt><dd>将开发中产品直接改为已上架</dd>
+            <dt>结果</dt><dd id="directListingResult">已上架-全面放开，所有 App 用户可发现配网入口</dd>
+          </div>
+          <button class="btn" id="simulateDirectListing">模拟直接全面上架</button>
+        </div>
+        <div class="subpanel" id="impactOldEntryPanel">
+          <h3>旧白名单入口迁移</h3>
+          <div class="alert">App > 白名单管理迁移为运营管理 > 白名单资产；产品详情测试白名单不再独立写入产品授权，进入配网入口策略或白名单资产查看。</div>
+          <button class="btn" id="jumpWhitelistAsset">跳转白名单资产</button>
+        </div>
+        <div class="subpanel">
+          <h3>权限态示意</h3>
+          <div class="form-grid">
+            <div class="field"><label for="permissionPersona">用户权限</label><select id="permissionPersona"><option>运营管理员</option><option>OTA 运维</option><option>无白名单资产权限</option></select></div>
+            <div class="field wide"><label>访问结果</label><div class="readonly-field" id="permissionResult">可查看白名单资产、创建配网/GTM/AB test 策略</div></div>
+          </div>
+          <div class="disabled-note">该区域用于原型验收权限、旧入口迁移和产品详情直接上架场景，不属于真实 IoT Admin 页面新增业务入口。</div>
+        </div>
+      `;
+      $('#drawerPrimary').textContent = '关闭';
+      $('#drawerSecondary').textContent = '关闭';
+      drawerPrimaryAction = closeDrawer;
+      drawerSecondaryAction = closeDrawer;
+      $('#drawerMask').classList.add('open');
+      renderPrototypeAnnotations();
+      $('#simulateDirectListing').addEventListener('click', () => {
+        $('#directListingResult').textContent = '模拟完成：产品状态已上架，范围为全面放开；不再需要 GTM 范围配置。';
+      });
+      $('#jumpWhitelistAsset').addEventListener('click', () => {
+        closeDrawer();
+        setModule('whitelistMenu');
+      });
+      $('#permissionPersona').addEventListener('change', event => {
+        const value = event.target.value;
+        $('#permissionResult').textContent = value === '无白名单资产权限'
+          ? '拒绝访问白名单资产和授权详情；策略入口按权限隐藏或只读'
+          : value === 'OTA 运维'
+            ? '可查看设备管理 > OTA 策略，可执行发布、暂停、恢复；不可维护白名单资产'
+            : '可查看白名单资产、创建配网/GTM/AB test 策略';
+      });
+    }
+
+    function showToast(message) {
+      const toast = $("#toast");
+      toast.textContent = message;
+      toast.classList.remove("hide");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => toast.classList.add("hide"), 2600);
+    }
+
+    function formatNow() {
+      const now = new Date();
+      const pad = (value) => String(value).padStart(2, "0");
+      return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    }
+
+    $$(".tab").forEach(tab => tab.addEventListener("click", () => setView(tab.dataset.view)));
+    $$("[data-module]").forEach(item => {
+      item.addEventListener("click", () => setModule(item.dataset.module));
+    });
+    $("#newStrategyTop").addEventListener("click", () => {
+      if (currentModule === "whitelistMenu") {
+        openBatchImportDrawer("asset");
+        return;
+      }
+      openStrategyDrawer("new");
+    });
+    $("#closeCreateDrawer").addEventListener("click", closeCreateDrawer);
+    $("#openImpactDemo").addEventListener("click", openImpactDemoDrawer);
+    $("#queryList").addEventListener("click", () => {
+      strategyPage = 1;
+      renderStrategyFilterOptions(menuModules[currentModule]);
+      renderStrategies();
+    });
+    $("#resetList").addEventListener("click", () => {
+      $("#filterType").value = "全部";
+      $("#filterStatus").value = "全部";
+      $("#filterProduct").value = "全部产品";
+      $("#filterProductState").value = "全部状态";
+      $("#filterOwner").value = "全部负责人";
+      $("#filterDc").value = "全部数据中心";
+      $("#filterKeyword").value = "";
+      strategyPage = 1;
+      renderStrategyFilterOptions(menuModules[currentModule]);
+      renderStrategies();
+    });
+    ["#filterProduct", "#filterProductState", "#filterOwner", "#filterDc", "#filterType", "#filterStatus"].forEach(selector => {
+      $(selector).addEventListener("change", () => {
+        strategyPage = 1;
+        renderStrategies();
+      });
+    });
+    $$(".object-card").forEach(card => card.addEventListener("click", () => setObject(card.dataset.object)));
+    $("#productSelect").addEventListener("change", () => {
+      if (currentObject === "rn" && $("#productSelect").value === "dev") {
+        setRnAudienceMode("whitelist", false);
+        conditions = [];
+        renderConditions();
+      }
+      updateCreateState();
+    });
+    $("#gtmRangeMode").addEventListener("change", updateGtmControls);
+    $("#gtmReleaseMode").addEventListener("change", updateCreateState);
+    $$("[data-ota-region]").forEach(input => input.addEventListener("change", updateOtaRegionSummary));
+    $("#otaRegionSelector").addEventListener("change", updateOtaRegionSummary);
+    $("#bucketRatio").addEventListener("change", updateCreateState);
+    $("#trafficCap").addEventListener("change", updateCreateState);
+    $("#expirePolicy").addEventListener("change", updateCreateState);
+    $("#addCondition").addEventListener("click", addCondition);
+    $("#saveDraftButton").addEventListener("click", saveDraftStrategy);
+    $("#publishButton").addEventListener("click", publishStrategy);
+    $("#whitelistImportDemo").addEventListener("click", () => openBatchImportDrawer("asset"));
+    $("#whitelistAddUser").addEventListener("click", openAddUserDrawer);
+    $("#queryWhitelist").addEventListener("click", () => {
+      whitelistPage = 1;
+      renderWhitelistAssets();
+    });
+    $("#resetWhitelist").addEventListener("click", () => {
+      $("#whitelistFilterDc").value = "全部";
+      $("#whitelistFilterType").value = "全部";
+      $("#whitelistFilterTag").value = "全部标签组";
+      $("#whitelistFilterKeyword").value = "";
+      whitelistPage = 1;
+      renderWhitelistAssets();
+    });
+    ["#whitelistFilterDc", "#whitelistFilterType", "#whitelistFilterTag"].forEach(selector => {
+      $(selector).addEventListener("change", () => {
+        whitelistPage = 1;
+        renderWhitelistAssets();
+      });
+    });
+    $("#applyBatchType").addEventListener("click", applyBatchType);
+    $("#deleteSelectedWhitelist").addEventListener("click", () => {
+      openWhitelistDeleteConfirm(filteredWhitelistRows().filter(user => user.checked).map(user => user.id));
+    });
+    $("#selectAllWhitelist").addEventListener("change", () => {
+      const checked = $("#selectAllWhitelist").checked;
+      whitelistPageState().pageRows.forEach(user => { user.checked = checked; });
+      renderWhitelistAssets();
+    });
+    $("#cancelWhitelistDelete").addEventListener("click", closeWhitelistDeleteConfirm);
+    $("#confirmWhitelistDelete").addEventListener("click", confirmWhitelistDelete);
+    $("#deleteWhitelistMask").addEventListener("click", (event) => {
+      if (event.target === $("#deleteWhitelistMask")) closeWhitelistDeleteConfirm();
+    });
+    $("#backToWhitelistList").addEventListener("click", () => setView("whitelistView"));
+    $$("#logicToggle button").forEach(button => {
+      button.addEventListener("click", () => {
+        conditionLogic = button.dataset.logic;
+        $$("#logicToggle button").forEach(b => b.classList.toggle("active", b === button));
+        $("#explainBox").textContent = `当前条件逻辑为 ${conditionLogic}；同一条件类型仍只能出现一次。`;
+      });
+    });
+    $$("#audienceMode button").forEach(button => {
+      button.addEventListener("click", () => {
+        if (button.disabled) return;
+        setRnAudienceMode(button.dataset.mode);
+      });
+    });
+    $("#closeDrawer").addEventListener("click", closeDrawer);
+    $("#drawerSecondary").addEventListener("click", () => (drawerSecondaryAction || closeDrawer)());
+    $("#drawerPrimary").addEventListener("click", () => {
+      if (drawerPrimaryAction) drawerPrimaryAction();
+    });
+    $("#drawerMask").addEventListener("click", (event) => {
+      if (event.target === $("#drawerMask")) closeDrawer();
+    });
+    $("#closePrototypeAnnotations").addEventListener("click", () => setPrototypeAnnotationsOpen(false));
+    $("#openPrototypeAnnotations").addEventListener("click", () => setPrototypeAnnotationsOpen(true));
+
+    setPrototypeAnnotationsOpen(true);
+    renderConditions();
+    renderStrategyFilterOptions(menuModules[currentModule]);
+    renderWhitelistAssets();
+    setModule("provisionMenu", false);
+    setView("listView");
+  </script>
+</body>
+</html>
