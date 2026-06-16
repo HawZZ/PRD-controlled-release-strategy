@@ -814,7 +814,7 @@
       ],
       releaseConfig: [
         { id: "drawer-release-config", title: "发布配置", body: "扩展程序发布配置由版本行操作进入。全面发布保存后进入已发布；自动发布保存后进入发布中，开放覆盖度达到 100% 后转为已发布；发布中可暂停发布、继续或停止。", loc: "产品详情 > 扩展程序 > 发布配置抽屉" },
-        { id: "drawer-release-config", title: "RN 发布配置字段定义", body: "字段包含 PanelCode、当前版本、发布方式、发布范围、时间分批、兼容性和生效时间。发布方式仅支持全面发布和自动发布。", loc: "产品详情 > 扩展程序 > 发布配置抽屉" },
+        { id: "drawer-release-config", title: "RN 发布配置字段定义", body: "字段包含 PanelCode、当前版本、发布方式、发布范围、时间分批、兼容性和生效时间。选择定时生效时必须填写定时生效时间。发布方式仅支持全面发布和自动发布。", loc: "产品详情 > 扩展程序 > 发布配置抽屉" },
         { id: "releaseMode", title: "发布方式", body: "全面发布一次开放到 100%，保存后版本进入已发布；自动发布按配置天数逐步提高开放覆盖度，例如 5 天时每天约增加 20%，开放覆盖度不等于实际用户命中或升级比例。", loc: "发布配置 > 发布方式" },
         { id: "releaseRangeMode", title: "发布范围跟随产品上架范围", body: "RN 版本发布范围可同步当前产品上架范围，或只选择其中一部分（子集），也就是只在已上架范围内再挑一部分生效；国家/地区子集使用按洲分类的可搜索点击式多选。产品上架范围缩小时，已配置的 OTA / RN 子范围会按交集同步收缩。", loc: "发布配置 > 发布范围" }
       ],
@@ -1773,7 +1773,8 @@
       const mode = normalizeReleaseMode(config.mode);
       const batchText = config.batchDays ? ` / ${config.batchDays} 天分批` : "";
       const progressText = config.progress ? ` / ${config.progress}` : "";
-      return `<span class="sub">发布控制：${mode} / ${releaseRangeSummary(config)}${batchText}${progressText}${restartText}</span>`;
+      const effectiveText = config.effectiveAt === "定时生效" ? ` / 定时生效：${config.effectiveTime || "未配置"}` : "";
+      return `<span class="sub">发布控制：${mode} / ${releaseRangeSummary(config)}${batchText}${progressText}${effectiveText}${restartText}</span>`;
     }
 
     function normalizeReleaseMode(mode) {
@@ -1861,6 +1862,7 @@
         range: releaseRangeValues,
         batchDays: existing.batchDays || "5",
         effectiveAt: existing.effectiveAt || "立即生效",
+        effectiveTime: existing.effectiveTime || "2026-06-05 10:00",
         restartCount: existing.restartCount || 0
       };
       const product = products[state.product];
@@ -1876,8 +1878,9 @@
           <div class="field" id="releaseBatchDaysField"><label>时间分批</label><input id="releaseBatchDays" value="${data.batchDays}" inputmode="numeric"><span class="hint">例如 5 天时，开放覆盖度每天约增加 20%，第 5 天达到 100%。开放覆盖度不是实际用户命中或升级比例。</span></div>
           <div class="field"><label>兼容性</label><div class="readonly"><span>App 5.2+，iOS / Android 文件均可用</span><span class="tag green">通过</span></div></div>
           <div class="field"><label>生效时间</label><select id="releaseEffectiveAt"><option ${data.effectiveAt !== "定时生效" ? "selected" : ""}>立即生效</option><option ${data.effectiveAt === "定时生效" ? "selected" : ""}>定时生效</option></select></div>
+          <div class="field ${data.effectiveAt === "定时生效" ? "" : "hide"}" id="releaseEffectiveTimeField"><label>定时生效时间</label><input id="releaseEffectiveTime" value="${data.effectiveTime}" placeholder="YYYY-MM-DD HH:mm"><span class="hint">选择定时生效时必填，到达该时间后发布配置开始生效。</span></div>
         </div>
-        <div class="impact-preview">影响预览：保存后配置立即生效${isReleased ? "，并重新计算该版本的发布命中范围。" : "。"}全面发布进入已发布；自动发布进入发布中，开放覆盖度达到 100% 后转为已发布。</div>
+        <div class="impact-preview">影响预览：保存后配置按生效时间执行${isReleased ? "，并重新计算该版本的发布命中范围。" : "。"}全面发布进入已发布；自动发布进入发布中，开放覆盖度达到 100% 后转为已发布。</div>
       </div>`;
     }
 
@@ -2389,10 +2392,16 @@
           const custom = $("#releaseRangeMode")?.value === "custom";
           $("#releaseRangeSubset")?.classList.toggle("hide", !custom);
         };
+        const syncReleaseEffectiveAt = () => {
+          const timed = $("#releaseEffectiveAt")?.value === "定时生效";
+          $("#releaseEffectiveTimeField")?.classList.toggle("hide", !timed);
+        };
         $("#releaseMode")?.addEventListener("change", syncReleaseMode);
         syncReleaseMode();
         $("#releaseRangeMode")?.addEventListener("change", syncReleaseRangeMode);
         syncReleaseRangeMode();
+        $("#releaseEffectiveAt")?.addEventListener("change", syncReleaseEffectiveAt);
+        syncReleaseEffectiveAt();
       }
       $("#drawerSave").onclick = () => {
         if (type === "importUsers") {
@@ -2541,6 +2550,12 @@
           const releaseMode = $("#releaseMode").value;
           const nextStatus = releaseMode === "全面发布" ? "已发布" : "发布中";
           const batchDays = $("#releaseBatchDays")?.value?.trim() || "5";
+          const effectiveAt = $("#releaseEffectiveAt")?.value || "立即生效";
+          const effectiveTime = $("#releaseEffectiveTime")?.value?.trim() || "";
+          if (effectiveAt === "定时生效" && !effectiveTime) {
+            alert("请配置定时生效时间。");
+            return;
+          }
           const override = confirmVersionOverride(extensionVersions, versionItem, "发布中", "extension");
           if (!override.ok) return;
           const coverage = coverageImpact(extensionVersions, versionItem, nextStatus, "extension");
@@ -2550,7 +2565,8 @@
             range: range.join("、"),
             batchDays: releaseMode === "自动发布" ? batchDays : "",
             progress: releaseMode === "自动发布" ? `第 1 / ${batchDays} 天，开放覆盖度 ${Math.ceil(100 / Math.max(1, Number(batchDays) || 1))}%` : "100%",
-            effectiveAt: $("#releaseEffectiveAt").value,
+            effectiveAt,
+            effectiveTime: effectiveAt === "定时生效" ? effectiveTime : "",
             restartCount: wasReleased ? (existing.restartCount || 1) + 1 : 1,
             updatedAt: "2026-06-05 17:20"
           };
