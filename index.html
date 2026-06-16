@@ -123,12 +123,13 @@
     .field .error-text { display: block; color: var(--red); margin-top: 5px; line-height: 1.5; }
     .field input.invalid { border-color: var(--red); background: #fffafa; }
     .field-inline { display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 8px; }
-    .tip-icon { width: 18px; height: 18px; border-radius: 50%; border: 1px solid #d9dfe9; background: #fff; color: #315efb; padding: 0; font-weight: 600; line-height: 16px; display: inline-grid; place-items: center; }
+    .tip-icon { width: 18px; height: 18px; border-radius: 50%; border: 1px solid #d9dfe9; background: #fff; color: #315efb; padding: 0; font-weight: 600; line-height: 16px; display: inline-grid; place-items: center; cursor: pointer; }
+    .tip-open > .tip-icon, .tip-open > .label-row .tip-icon { border-color: #315efb; background: #eef4ff; }
     .header-tip { margin-left: 5px; vertical-align: text-bottom; }
     .version-rule { display: grid; grid-template-columns: 122px minmax(0, 1fr); gap: 8px; }
     .app-version-field { position: relative; }
     .app-version-popover { position: absolute; left: 0; top: 56px; width: 332px; z-index: 40; display: none; background: #fff; border: 1px solid #dfe5ef; box-shadow: 0 12px 28px rgba(15, 35, 70, .16); padding: 12px; }
-    .app-version-popover.open { display: block; }
+    .app-version-popover.open, .app-version-field:hover .app-version-popover, .app-version-field:focus-within .app-version-popover, .app-version-field.tip-open .app-version-popover { display: block; }
     .app-version-popover p { margin-bottom: 10px; color: #56616f; line-height: 1.65; }
     .app-shot { border: 1px solid #e2e7f0; background: #f8fafc; width: 228px; margin: 0 auto; padding: 8px; color: #2d3848; }
     .app-shot-head { text-align: center; font-weight: 600; padding: 4px 0 8px; border-bottom: 1px solid #e2e7f0; }
@@ -226,11 +227,14 @@
     .status-tip { position: relative; display: inline-flex; margin-left: 5px; vertical-align: middle; }
     .status-tip .tip-icon { flex: 0 0 auto; }
     .status-tip-popover { display: none; position: absolute; top: 24px; left: -120px; width: 380px; z-index: 60; border: 1px solid #dfe5ef; background: #fff; box-shadow: 0 12px 28px rgba(15, 35, 70, .16); padding: 12px; color: #56616f; }
-    .status-tip:hover .status-tip-popover, .status-tip:focus-within .status-tip-popover { display: block; }
+    .status-tip:hover .status-tip-popover, .status-tip:focus-within .status-tip-popover, .status-tip.tip-open .status-tip-popover { display: block; }
     .status-tip-title { display: block; color: #1f2d3d; font-weight: 600; margin-bottom: 8px; }
     .status-tip-row { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 8px; align-items: start; padding: 6px 0; border-top: 1px solid #edf0f5; }
     .status-tip-row:first-of-type { border-top: 0; }
     .status-tip-row .tag { width: max-content; margin-right: 0; }
+    .inline-tip { position: relative; display: inline-flex; align-items: center; margin-left: 0; vertical-align: middle; }
+    .inline-tip-popover { display: none; position: absolute; top: 24px; left: -86px; width: 300px; z-index: 80; border: 1px solid #dfe5ef; background: #fff; box-shadow: 0 12px 28px rgba(15, 35, 70, .16); padding: 10px 12px; color: #56616f; line-height: 1.65; }
+    .inline-tip:hover .inline-tip-popover, .inline-tip:focus-within .inline-tip-popover, .inline-tip.tip-open .inline-tip-popover { display: block; }
     .hit-rule-note { border: 1px solid #e5eaf3; background: #fafbfc; color: #5d6878; padding: 10px 12px; line-height: 1.65; margin: 12px 0; }
     .disabled-link { color: #b7c0cd; border-color: #edf0f5; pointer-events: none; }
     .readonly { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
@@ -834,6 +838,7 @@
       if (state.view === "ota") renderOta();
       renderWhitelist();
       renderNotes();
+      wireTips();
     }
 
     function renderChrome() {
@@ -955,6 +960,37 @@
         <button type="button" class="tip-icon" aria-label="${title}">?</button>
         <span class="status-tip-popover"><span class="status-tip-title">${title}</span>${rows}</span>
       </span>`;
+    }
+
+    function closeAllTips(except = null) {
+      $$(".tip-open").forEach(tip => {
+        if (tip !== except) tip.classList.remove("tip-open");
+      });
+      $$(".app-version-popover.open").forEach(popover => {
+        if (!except || !except.contains(popover)) popover.classList.remove("open");
+      });
+    }
+
+    function wireTips(root = document) {
+      root.querySelectorAll(".status-tip, .inline-tip, .app-version-field").forEach(tip => {
+        const button = tip.querySelector(".tip-icon");
+        if (!button || button.dataset.tipBound === "1") return;
+        button.dataset.tipBound = "1";
+        button.addEventListener("click", event => {
+          event.preventDefault();
+          event.stopPropagation();
+          const willOpen = !tip.classList.contains("tip-open");
+          closeAllTips(tip);
+          tip.classList.toggle("tip-open", willOpen);
+          const appPopover = tip.querySelector(".app-version-popover");
+          if (appPopover) appPopover.classList.toggle("open", willOpen);
+        });
+      });
+      root.querySelectorAll(".status-tip-popover, .inline-tip-popover, .app-version-popover").forEach(popover => {
+        if (popover.dataset.tipBound === "1") return;
+        popover.dataset.tipBound = "1";
+        popover.addEventListener("click", event => event.stopPropagation());
+      });
     }
 
     function compareVersion(left, right) {
@@ -1656,11 +1692,6 @@
         state.otaStep = Number(step.dataset.otaStep);
         render();
       }));
-      $("#otaAppVersionTip")?.addEventListener("click", event => {
-        event.stopPropagation();
-        $("#otaAppVersionPopover")?.classList.toggle("open");
-      });
-      $("#otaAppVersionPopover")?.addEventListener("click", event => event.stopPropagation());
     }
 
     function extensionPanelModeHtml(panelMode) {
@@ -2157,7 +2188,7 @@
         <div class="auth-radio-line">
           <span class="inline-label"><span class="required">*</span>可见用户：</span>
           <label><input type="radio" name="authVisibleMode" value="all" ${mode === "all" ? "checked" : ""}> 全部公司用户</label>
-          <label><input type="radio" name="authVisibleMode" value="specified" ${mode === "specified" ? "checked" : ""}> 指定白名单用户 <button type="button" class="tip-icon" title="公司用户默认授权该产品；此处仅用于选择需要指定授权的外部白名单用户。" aria-label="公司用户默认授权该产品">?</button></label>
+          <label><input type="radio" name="authVisibleMode" value="specified" ${mode === "specified" ? "checked" : ""}> 指定白名单用户 <span class="inline-tip"><button type="button" class="tip-icon" aria-label="公司用户默认授权该产品">?</button><span class="inline-tip-popover">公司用户默认授权该产品；此处仅用于选择需要指定授权的外部白名单用户。</span></span></label>
         </div>
         <div class="auth-specified-panel ${mode === "specified" ? "" : "hide"}" id="authSpecifiedPanel">
           <div class="auth-dc-tabs">
@@ -2346,19 +2377,7 @@
         };
         $("#firmwareAddFile")?.addEventListener("change", syncFirmwareAdd);
         $("#firmwareAddType")?.addEventListener("change", syncFirmwareAdd);
-        $("#firmwareAddAppVersionTip")?.addEventListener("click", event => {
-          event.stopPropagation();
-          $("#firmwareAddAppVersionPopover")?.classList.toggle("open");
-        });
-        $("#firmwareAddAppVersionPopover")?.addEventListener("click", event => event.stopPropagation());
         syncFirmwareAdd();
-      }
-      if (type === "firmwareVersionEdit" || type === "firmwareVersionDetail") {
-        $("#firmwareEditAppVersionTip")?.addEventListener("click", event => {
-          event.stopPropagation();
-          $("#firmwareEditAppVersionPopover")?.classList.toggle("open");
-        });
-        $("#firmwareEditAppVersionPopover")?.addEventListener("click", event => event.stopPropagation());
       }
       if (type === "releaseConfig") {
         wireMultiPick();
@@ -2688,6 +2707,7 @@
       render();
     });
     document.addEventListener("click", event => {
+      if (!event.target.closest(".status-tip, .inline-tip, .app-version-field")) closeAllTips();
       const opener = event.target.closest("[data-open-drawer]");
       if (opener) {
         openDrawer(opener.dataset.openDrawer);
