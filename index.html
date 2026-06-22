@@ -8,6 +8,7 @@
     :root {
       --side: 148px;
       --drawer: 560px;
+      --annotation: 372px;
       --blue: #3f6ff3;
       --blue-soft: #eef4ff;
       --green: #52c41a;
@@ -32,7 +33,7 @@
     body { overflow-x: hidden; }
     button, input, select, textarea { font: inherit; }
     button { cursor: pointer; }
-    .app { min-height: 100vh; display: grid; grid-template-columns: var(--side) minmax(960px, 1fr); }
+    .app { width: calc(100vw - var(--annotation)); height: 100vh; display: grid; grid-template-columns: var(--side) minmax(960px, 1fr); overflow: auto; position: relative; z-index: 1; }
     .side { background: var(--side-bg); color: rgba(255, 255, 255, .72); min-height: 100vh; position: sticky; top: 0; }
     .logo { height: 56px; display: flex; align-items: center; gap: 6px; padding: 0 14px; color: #fff; font-weight: 700; }
     .logo small { color: rgba(255, 255, 255, .66); font-weight: 500; }
@@ -247,25 +248,33 @@
     .table-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .pager { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 12px; color: #8b95a4; }
     body.drawer-open { --active-drawer: var(--drawer); }
-    body.drawer-open.drawer-wide { --active-drawer: min(920px, calc(100vw - var(--side))); }
-    .note-fab { position: fixed; right: calc(var(--active-drawer) + 22px); top: 18px; z-index: 100160; height: 30px; border: 1px solid #d9dfe9; border-radius: 15px; background: #fff; color: #516071; padding: 0 12px; box-shadow: 0 8px 18px rgba(15, 35, 70, .12); }
-    .note-popover { position: fixed; right: calc(var(--active-drawer) + 22px); top: 58px; width: 360px; max-height: calc(100vh - 78px); overflow: auto; display: none; background: #fff; border: 1px solid #dfe5ef; box-shadow: var(--shadow); padding: 14px; z-index: 100150; }
-    .note-popover.open { display: block; }
-    body.notes-open:not(.drawer-open) .content { padding-right: 400px; }
+    body.drawer-open.drawer-wide { --active-drawer: min(920px, calc(100vw - var(--side) - var(--annotation))); }
+    .note-fab { min-height: 30px; border: 1px solid #d9dfe9; border-radius: 2px; background: #fff; color: #516071; padding: 0 10px; }
+    .note-popover { position: fixed; right: 0; top: 0; bottom: 0; width: var(--annotation); overflow: auto; display: block; background: #fff; border-left: 1px solid #dfe5ef; box-shadow: -10px 0 28px rgba(15, 35, 70, .10); padding: 16px; z-index: 100170; }
+    body.notes-closed .note-popover { display: none; }
+    body.notes-closed .app { width: 100vw; }
+    body.notes-closed .drawer { right: 0; }
+    body.notes-closed .drawer-mask { right: 0; }
     .note-popover h2 { margin-bottom: 6px; }
     .note-popover p { font-size: 12px; }
-    .note-item { width: 100%; text-align: left; border: 1px solid #e5eaf3; background: #fff; padding: 10px; margin-top: 10px; }
-    .note-item.active { border-color: #facc15; background: #fffbe6; }
+    .note-toolbar { position: sticky; top: -16px; z-index: 2; margin: -16px -16px 12px; padding: 14px 16px 12px; background: #fff; border-bottom: 1px solid #edf0f5; }
+    .note-toolbar-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .note-context-pill { display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px; border-radius: 2px; background: #eef4ff; color: #315efb; margin-top: 8px; }
+    .note-item { width: 100%; text-align: left; border: 1px solid #e5eaf3; background: #fff; padding: 11px 12px; margin-top: 10px; border-radius: 4px; }
+    .note-item.active { border-color: #facc15; background: #fffbe6; box-shadow: inset 3px 0 0 #facc15; }
     .note-index, .anchor { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; background: #facc15; color: #713f12; font-size: 11px; font-weight: 700; }
-    .anchor { display: none; margin-right: 6px; vertical-align: middle; }
-    body.notes-open .anchor { display: inline-grid; }
-    .note-title { display: block; margin-top: 6px; color: #1f2d3d; font-weight: 600; }
-    .note-body { display: block; margin-top: 5px; color: #697386; line-height: 1.6; }
-    .note-loc { display: block; margin-top: 6px; color: #9aa4b2; }
+    .anchor { margin-right: 6px; vertical-align: middle; }
+    body.notes-closed .anchor { display: none; }
+    .note-title { display: block; margin-top: 7px; color: #1f2d3d; font-weight: 600; }
+    .note-body { display: block; margin-top: 7px; color: #697386; line-height: 1.65; }
+    .note-section { display: block; margin-top: 7px; color: #39465a; font-weight: 600; }
+    .note-line { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 4px; margin-top: 4px; }
+    .note-line::before { content: "•"; color: #315efb; }
+    .note-loc { display: block; margin-top: 8px; color: #9aa4b2; }
     .is-highlight { outline: 2px solid #facc15; outline-offset: 3px; }
-    .drawer-mask { position: fixed; inset: 0; background: rgba(15, 23, 42, .26); display: none; z-index: 100080; }
-    .drawer { position: fixed; top: 0; right: 0; width: var(--drawer); height: 100vh; background: #fff; border-left: 1px solid #dfe5ef; box-shadow: var(--shadow); display: none; flex-direction: column; z-index: 100090; }
-    .drawer.wide { width: min(920px, calc(100vw - var(--side))); }
+    .drawer-mask { position: fixed; inset: 0 var(--annotation) 0 0; background: rgba(15, 23, 42, .26); display: none; z-index: 100080; }
+    .drawer { position: fixed; top: 0; right: var(--annotation); width: var(--drawer); height: 100vh; background: #fff; border-left: 1px solid #dfe5ef; box-shadow: var(--shadow); display: none; flex-direction: column; z-index: 100090; }
+    .drawer.wide { width: min(920px, calc(100vw - var(--side) - var(--annotation))); }
     .drawer.open, .drawer-mask.open { display: flex; }
     .drawer-head { padding: 16px 18px; border-bottom: 1px solid #edf0f5; display: flex; justify-content: space-between; gap: 12px; }
     .drawer-body { padding: 18px; overflow: auto; flex: 1; }
@@ -331,7 +340,7 @@
           </div>
         </div>
         <div class="head-icons">
-          <button class="note-fab" id="toggleNotes">原型批注</button>
+          <button class="note-fab" id="toggleNotes">隐藏批注</button>
           <button class="round-icon">?</button>
           <button class="round-icon">⌂</button>
           <button class="round-icon">⚙</button>
@@ -521,9 +530,15 @@
     </main>
   </div>
 
-  <aside class="note-popover" id="notesPanel">
-    <h2>原型批注</h2>
-    <p id="noteIntro">默认不显示锚点，避免影响原页面判断。打开批注后黄色编号仅用于说明，不属于真实 IoT Admin 页面。</p>
+  <aside class="note-popover" id="notesPanel" aria-label="原型批注">
+    <div class="note-toolbar">
+      <div class="note-toolbar-row">
+        <h2>原型批注</h2>
+        <button class="note-fab" id="collapseNotes" type="button">隐藏</button>
+      </div>
+      <p id="noteIntro">黄色编号是批注锚点，不属于真实 IoT Admin 页面。</p>
+      <span class="note-context-pill" id="noteContext">产品详情批注</span>
+    </div>
     <div id="noteList"></div>
   </aside>
 
@@ -627,7 +642,8 @@
       whitelistPage: 1,
       deleteIds: [],
       drawer: null,
-      notesOpen: false,
+      notesOpen: true,
+      activeNoteId: "",
       importType: null,
       importStage: null,
       importTimer: null,
@@ -2006,21 +2022,85 @@
           ? "firmware"
           : state.view);
       const list = notes[key] || [];
+      const context = noteContextLabel(key);
+      const visible = list.some(note => note.id === state.activeNoteId) ? state.activeNoteId : list[0]?.id || "";
+      state.activeNoteId = visible;
       $("#noteIntro").textContent = state.importStage
-        ? "当前弹窗批注。批注用于说明变更点，不属于真实 IoT Admin 页面。"
+        ? "当前弹窗批注。黄色编号是批注锚点，不属于真实 IoT Admin 页面。"
         : state.activeModal
-        ? "当前弹窗批注。批注用于说明变更点，不属于真实 IoT Admin 页面。"
+        ? "当前弹窗批注。黄色编号是批注锚点，不属于真实 IoT Admin 页面。"
         : state.drawer
-        ? "当前抽屉批注。批注用于说明变更点，不属于真实 IoT Admin 页面。"
-        : "默认不显示锚点，避免影响原页面判断。打开批注后黄色编号仅用于说明，不属于真实 IoT Admin 页面。";
+        ? "当前抽屉批注。黄色编号是批注锚点，不属于真实 IoT Admin 页面。"
+        : "当前页面批注。黄色编号是批注锚点，不属于真实 IoT Admin 页面。";
+      $("#noteContext").textContent = context;
       $("#noteList").innerHTML = list.map((note, index) => `
-        <button class="note-item" data-note-target="${note.id}">
+        <button class="note-item ${note.id === state.activeNoteId ? "active" : ""}" data-note-target="${note.id}">
           <span class="note-index">${index + 1}</span>
-          <span class="note-title">${note.title}</span>
-          <span class="note-body">${note.body}</span>
-          <span class="note-loc">关联位置：${note.loc}</span>
+          <span class="note-title">${escapeHtml(note.title)}</span>
+          <span class="note-body">${renderNoteBody(note.body)}</span>
+          <span class="note-loc">关联位置：${escapeHtml(note.loc)}</span>
         </button>`).join("");
-      $$("[data-note-target]").forEach(btn => btn.addEventListener("click", () => highlight(btn.dataset.noteTarget)));
+      $$("[data-note-target]").forEach(btn => btn.addEventListener("click", () => {
+        state.activeNoteId = btn.dataset.noteTarget;
+        renderNotes();
+        highlight(btn.dataset.noteTarget);
+      }));
+    }
+
+    function noteContextLabel(key) {
+      const labels = {
+        product: "产品详情批注",
+        extension: "产品详情 > 扩展程序批注",
+        firmware: "产品详情 > 固件配置批注",
+        whitelist: "App > 白名单管理批注",
+        tags: "App > 白名单标签组批注",
+        listing: "产品上架范围抽屉批注",
+        addUser: "新增白名单用户抽屉批注",
+        importUsers: "批量导入抽屉批注",
+        importProgress: "同步导入弹窗批注",
+        importResult: "导入结果弹窗批注",
+        authProduct: "授权到产品抽屉批注",
+        authList: "产品测试白名单抽屉批注",
+        otaForm: "固件发布配置批注",
+        firmwareVersionAdd: "新建固件版本抽屉批注",
+        releaseConfig: "扩展程序发布配置抽屉批注",
+        extensionVersionAdd: "新增扩展程序版本抽屉批注",
+        extensionVersion: "版本指定弹窗批注",
+        extensionPanelMode: "控制面板类型弹窗批注",
+        versionState: "版本状态唯一性弹窗批注",
+        deleteModal: "删除确认弹窗批注"
+      };
+      return labels[key] || "原型批注";
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function renderNoteBody(body) {
+      return String(body || "")
+        .split(/[；;。]/)
+        .map(line => line.trim())
+        .filter(Boolean)
+        .map(line => {
+          const section = line.match(/^(触发条件|系统响应|校验规则|按钮状态|异常处理|PRD 边界|流程|字段|命中规则|发布方式|范围规则|状态规则)：(.+)$/);
+          if (section) return `<span class="note-section">${escapeHtml(section[1])}</span><span class="note-line">${escapeHtml(section[2])}</span>`;
+          return `<span class="note-line">${escapeHtml(line)}</span>`;
+        })
+        .join("");
+    }
+
+    function setNotesOpen(open) {
+      state.notesOpen = open;
+      document.body.classList.toggle("notes-closed", !open);
+      $("#toggleNotes").textContent = open ? "隐藏批注" : "查看批注";
+      $("#collapseNotes").textContent = "隐藏";
+      renderNotes();
     }
 
     function highlight(id) {
@@ -2050,8 +2130,7 @@
       if (type === "addUser") {
         state.newAuthProducts = new Set(["V3 Dev Pump", "Pump-H"]);
       }
-      $("#notesPanel").classList.remove("open");
-      document.body.classList.remove("notes-open");
+      setNotesOpen(state.notesOpen);
       const configs = {
         addUser: ["新增白名单用户", "", addUserHtml()],
         importUsers: ["批量导入白名单用户", "上传 xlsx 后同步导入；模板中的授权产品列可为空。", importHtml()],
@@ -2848,12 +2927,8 @@
         }
       }
     });
-    $("#toggleNotes").addEventListener("click", () => {
-      state.notesOpen = !state.notesOpen;
-      $("#notesPanel").classList.toggle("open", state.notesOpen);
-      document.body.classList.toggle("notes-open", state.notesOpen);
-      renderNotes();
-    });
+    $("#toggleNotes").addEventListener("click", () => setNotesOpen(!state.notesOpen));
+    $("#collapseNotes").addEventListener("click", () => setNotesOpen(false));
     $("#closeDrawer").addEventListener("click", closeDrawer);
     $("#drawerCancel").addEventListener("click", closeDrawer);
     $("#drawerMask").addEventListener("click", closeDrawer);
