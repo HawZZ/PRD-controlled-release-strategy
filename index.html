@@ -980,7 +980,7 @@
     };
 
     const versionHitTips = {
-      firmware: "App 请求 OTA 时只取符合固件类型、APP 版本和发布范围条件的最新版本；测试中、发布中、已发布并行比较，取最高固件版本；暂停发布和已停止不参与命中策略。",
+      firmware: "App 请求 OTA 时，按固件类型、硬件版本、APP 版本条件和发布范围筛选候选版本；同一固件类型×硬件版本×APP版本条件维度内，测试中、发布中、已发布并行比较取最高固件版本；不同维度的版本各自独立命中；暂停发布和已停止不参与命中；无命中时设备保持当前固件版本不变。",
       extension: "App 请求扩展程序时先按 PanelCode、功能版本、最小 App 版本、发布范围和用户可见范围筛选；测试中仅白名单公司用户和已授权当前产品的外部用户可见，发布中/已发布面向线上用户；测试中、发布中、已发布并行比较，取最高扩展程序版本；暂停发布和已停止不参与命中策略。"
     };
 
@@ -1483,7 +1483,18 @@
           return;
         }
         if (btn.dataset.firmwareAction === "stop") {
-          if (!confirm(`确定停止固件版本 ${item.version}？停止后不再匹配白名单或发布命中条件。`)) return;
+          const activeOthers = firmwareVersions.filter(v => v.id !== item.id && v.type === item.type && v.hardware === item.hardware && ["测试中","发布中","已发布"].includes(v.status));
+          if (activeOthers.length === 0) {
+            const confirmed = await openVersionStateModal({
+              title: "停止后无可命中版本",
+              summary: `停止固件版本 ${item.version} 后，该固件类型×硬件版本维度下将无可命中版本，App 请求时设备将保持当前固件版本不变（不升级不回滚）。`,
+              detail: "是否仍然停止？",
+              mode: "confirm"
+            });
+            if (!confirmed) return;
+          } else {
+            if (!confirm(`确定停止固件版本 ${item.version}？停止后不再匹配白名单或发布命中条件。`)) return;
+          }
           item.status = "已停止";
           item.log = "已停止";
           otaTasks.forEach(task => {
@@ -1639,25 +1650,27 @@
 
     function firmwareVersionEditHtml(readonly = false) {
       const item = firmwareVersions.find(version => version.id === state.firmwareEditingId) || firmwareVersions[0];
-      return `<div id="drawer-firmware-version-edit" data-note-anchor="firmware-state">
-        <div class="form-grid">
-          <div class="field"><label>固件名称</label><div class="readonly value-only">${item.name}</div></div>
-          <div class="field"><label>固件类型</label><div class="readonly value-only">${item.type}</div></div>
-          <div class="field"><label>固件版本</label><div class="readonly value-only">${item.version}</div></div>
-          <div class="field"><label>硬件版本</label><div class="readonly value-only">${item.hardware}</div></div>
-          <div class="field"><label>状态</label><div class="readonly value-only"><span>${item.status}</span><span class="tag ${firmwareStatusClass(item.status)}">${item.status}</span></div></div>
-          <div class="field"><label>上传时间</label><div class="readonly value-only">${item.createdAt}</div></div>
-          <div class="field"><label>功能版本</label><div class="readonly value-only">${item.functionVersion}</div></div>
-          <div class="field app-version-field" data-note-anchor="ota-version-name">
-            <div class="label-row"><label>APP版本号</label><button class="tip-icon" id="firmwareEditAppVersionTip" type="button" aria-label="查看 APP 版本号位置">?</button></div>
-            <div class="readonly value-only">${item.appRule || "版本不低于"} ${item.appVersion || "v 2.2.10"}</div>
-            <div class="app-version-popover" id="firmwareEditAppVersionPopover">
-              <p>平台用户可在 App 的“关于”页面查看当前版本号。</p>
-              <div class="app-shot"><div class="app-shot-head">关于</div><div class="app-shot-row"><span>当前版本</span><span>v 2.2.10</span></div></div>
+      const isDev = item.status === “开发中”;
+      const editable = isDev && !readonly;
+      return `<div id=”drawer-firmware-version-edit” data-note-anchor=”firmware-state”>
+        <div class=”form-grid”>
+          <div class=”field”><label>固件名称</label><div class=”readonly value-only”>${item.name}</div></div>
+          <div class=”field”><label>固件类型</label>${editable ? `<select id=”firmwareEditType”><option ${item.type === “MCU固件” ? “selected” : “”}>MCU固件</option><option ${item.type === “模组固件” ? “selected” : “”}>模组固件</option></select>` : `<div class=”readonly value-only”>${item.type}</div>`}</div>
+          <div class=”field”><label>固件版本</label><div class=”readonly value-only”>${item.version}</div></div>
+          <div class=”field”><label>硬件版本</label><div class=”readonly value-only”>${item.hardware}</div></div>
+          <div class=”field”><label>状态</label><div class=”readonly value-only”><span>${item.status}</span><span class=”tag ${firmwareStatusClass(item.status)}”>${item.status}</span></div></div>
+          <div class=”field”><label>上传时间</label><div class=”readonly value-only”>${item.createdAt}</div></div>
+          <div class=”field”><label>功能版本</label>${editable ? `<select id=”firmwareEditFunctionVersion”><option ${item.functionVersion === “全部” ? “selected” : “”}>全部</option><option ${item.functionVersion === “版本1 - 已发布” ? “selected” : “”}>版本1 - 已发布</option><option ${item.functionVersion === “版本2 - 开发中” ? “selected” : “”}>版本2 - 开发中</option></select>` : `<div class=”readonly value-only”>${item.functionVersion}</div>`}</div>
+          <div class=”field app-version-field” data-note-anchor=”ota-version-name”>
+            <div class=”label-row”><label>APP版本号</label><button class=”tip-icon” id=”firmwareEditAppVersionTip” type=”button” aria-label=”查看 APP 版本号位置”>?</button></div>
+            ${editable ? `<div class=”version-rule”><select id=”firmwareEditAppRule”><option ${(item.appRule || “版本不低于”) === “版本不低于” ? “selected” : “”}>版本不低于</option><option ${item.appRule === “版本等于” ? “selected” : “”}>版本等于</option></select><input id=”firmwareEditAppVersion” value=”${item.appVersion || “v 2.2.10”}”></div>` : `<div class=”readonly value-only”>${item.appRule || “版本不低于”} ${item.appVersion || “v 2.2.10”}</div>`}
+            <div class=”app-version-popover” id=”firmwareEditAppVersionPopover”>
+              <p>平台用户可在 App 的”关于”页面查看当前版本号。</p>
+              <div class=”app-shot”><div class=”app-shot-head”>关于</div><div class=”app-shot-row”><span>当前版本</span><span>v 2.2.10</span></div></div>
             </div>
           </div>
-          <div class="field"><label>备注</label>${readonly ? `<div class="readonly value-only">${item.log}</div>` : `<textarea id="firmwareEditRemark">${item.log}</textarea>`}</div>
-          ${item.packageName ? `<div class="field"><label>固件文件</label><div class="readonly value-only">${item.packageName}</div></div>` : ""}
+          <div class=”field”><label>备注</label>${readonly ? `<div class=”readonly value-only”>${item.log}</div>` : `<textarea id=”firmwareEditRemark”>${item.log}</textarea>`}</div>
+          ${item.packageName ? `<div class=”field”><label>固件文件</label><div class=”readonly value-only”>${item.packageName}</div></div>` : “”}
         </div>
       </div>`;
     }
@@ -1738,7 +1751,7 @@
             }
             const publishMode = $("#otaPublishPlan")?.value || "自动发布";
             const nextStatus = publishMode === "全面发布" ? "已发布" : "发布中";
-            const override = await confirmVersionOverride(firmwareVersions, target, "发布中", "firmware");
+            const override = await confirmVersionOverride(firmwareVersions, target, nextStatus, "firmware");
             if (!override.ok) return;
             const coverage = coverageImpact(firmwareVersions, target, nextStatus, "firmware");
             createOtaTaskForFirmware(target);
@@ -1858,7 +1871,7 @@
     function extensionVersionActionsHtml(item) {
       const versionButton = `<button class="btn" data-open-extension-version data-version="${item.version}">版本指定</button>`;
       if (item.status === "开发中") {
-        return `${versionButton}<button class="btn primary" data-extension-version-action="test" data-version="${item.version}">进入测试</button><button class="btn danger" data-extension-version-action="delete" data-version="${item.version}">删除</button>`;
+        return `${versionButton}<button class="btn" data-extension-version-action="edit" data-version="${item.version}">编辑</button><button class="btn primary" data-extension-version-action="test" data-version="${item.version}">进入测试</button><button class="btn danger" data-extension-version-action="delete" data-version="${item.version}">删除</button>`;
       }
       if (item.status === "测试中") {
         return `${versionButton}<button class="btn danger" data-extension-version-action="stop" data-version="${item.version}">停止</button><button class="btn primary" data-extension-version-action="configure" data-version="${item.version}">发布</button>`;
@@ -2288,7 +2301,7 @@
       const users = whitelistUsers.filter(user => ids.includes(user.id));
       return `<div id="drawer-auth-product" data-note-anchor="drawer-auth-product">
         <div class="form-grid">
-          <div class="field"><label>授权产品</label><select id="authProductTarget">${productOptionsHtml()}</select></div>
+          <div class="field"><label>授权产品（多选）</label>${productPickerHtml()}</div>
           <div class="field"><label>选中用户</label><div class="readonly">${users.length} 人</div></div>
         </div>
         <table>
@@ -2310,7 +2323,8 @@
           <div class="field"><label>当前产品状态</label><div class="readonly">${product.status}</div></div>
           <div class="field"><label for="listingMode">上架方式</label><select id="listingMode"><option value="partial" ${mode === "partial" ? "selected" : ""}>${isDev ? "部分放开" : "编辑部分放开范围"}</option><option value="full" ${mode === "full" ? "selected" : ""}>全面放开</option></select></div>
           <div class="field" id="rangeModeField"><label for="rangeMode">范围模式</label><select id="rangeMode"><option value="dc" ${rangeMode === "dc" ? "selected" : ""}>数据中心</option><option value="country" ${rangeMode === "country" ? "selected" : ""}>国家 / 地区</option></select></div>
-          <div class="field"><label>生效时间</label><select><option>立即生效</option><option>定时生效</option></select></div>
+          <div class="field"><label>生效时间</label><select id="listingEffectiveMode"><option>立即生效</option><option>定时生效</option></select></div>
+          <div class="field hide" id="listingEffectiveTimeField"><label>定时生效时间</label><input id="listingEffectiveTime" type="datetime-local" value="2026-06-30T10:00"><span class="hint">服务器时间 ≥ 生效时间后，产品自动转为已上架。</span></div>
         </div>
         <div class="notice" id="listingExplain">部分放开时需要选择国家 / 地区或数据中心；全面放开不再展示范围选择。</div>
         <div class="check-row" id="dcRange"><label><input type="checkbox" value="北美数据中心" ${checked("北美数据中心")}> 北美数据中心</label><label><input type="checkbox" value="欧洲数据中心" ${checked("欧洲数据中心")}> 欧洲数据中心</label><label><input type="checkbox" value="亚太数据中心" ${checked("亚太数据中心")}> 亚太数据中心</label><label><input type="checkbox" value="中国数据中心" ${checked("中国数据中心")}> 中国数据中心</label></div>
@@ -2417,6 +2431,9 @@
         $("#productSearch").addEventListener("input", renderProductPicker);
         $("#productStatusFilter").addEventListener("change", renderProductPicker);
       }
+      if (type === "authProduct") {
+        renderProductPicker();
+      }
       if (type === "listing") {
         wireMultiPick();
         const syncListingRange = () => {
@@ -2448,6 +2465,12 @@
         $("#listingMode")?.addEventListener("change", syncListingRange);
         $("#rangeMode")?.addEventListener("change", syncListingRange);
         syncListingRange();
+        const syncListingEffectiveMode = () => {
+          const timed = $("#listingEffectiveMode")?.value === "定时生效";
+          $("#listingEffectiveTimeField")?.classList.toggle("hide", !timed);
+        };
+        $("#listingEffectiveMode")?.addEventListener("change", syncListingEffectiveMode);
+        syncListingEffectiveMode();
       }
       if (type === "authList") {
         const addVisible = () => {
@@ -2555,9 +2578,10 @@
         }
         if (type === "authProduct") {
           const ids = state.authorizeIds.length ? state.authorizeIds : Array.from(state.selectedIds);
-          const targetProduct = $("#authProductTarget").value;
-          whitelistUsers.forEach(user => {
-            if (ids.includes(user.id) && user.type === "外部用户" && !user.products.includes(targetProduct)) user.products.push(targetProduct);
+          const toAdd = Array.from(state.newAuthProducts);
+          ids.forEach(uid => {
+            const user = whitelistUsers.find(u => u.id === uid);
+            if (user) toAdd.forEach(p => { if (!user.products.includes(p)) user.products.push(p); });
           });
           state.authorizeIds = [];
         }
@@ -2642,7 +2666,13 @@
           const item = firmwareVersions.find(version => version.id === state.firmwareEditingId);
           if (item) {
             item.log = $("#firmwareEditRemark").value.trim() || item.log;
-            state.firmwareMessage = `固件版本 ${item.version} 的备注已保存。`;
+            if (item.status === "开发中") {
+              if ($("#firmwareEditType")) item.type = $("#firmwareEditType").value;
+              if ($("#firmwareEditFunctionVersion")) item.functionVersion = $("#firmwareEditFunctionVersion").value;
+              if ($("#firmwareEditAppRule")) item.appRule = $("#firmwareEditAppRule").value;
+              if ($("#firmwareEditAppVersion")) item.appVersion = $("#firmwareEditAppVersion").value;
+            }
+            state.firmwareMessage = `固件版本 ${item.version} 已保存。`;
           }
         }
         if (type === "extensionVersionAdd") {
@@ -2689,7 +2719,7 @@
             alert("请配置定时生效时间。");
             return;
           }
-          const override = await confirmVersionOverride(extensionVersions, versionItem, "发布中", "extension");
+          const override = await confirmVersionOverride(extensionVersions, versionItem, nextStatus, "extension");
           if (!override.ok) return;
           const coverage = coverageImpact(extensionVersions, versionItem, nextStatus, "extension");
           extensionReleaseConfigs[version] = {
@@ -2881,6 +2911,14 @@
           render();
           return;
         }
+        if (versionAction.dataset.extensionVersionAction === "edit") {
+          const newLog = prompt(`编辑版本 ${item.version} 的更新说明：`, item.log || "");
+          if (newLog === null) return;
+          item.log = newLog.trim() || item.log;
+          state.lifecycleMessage = `版本 ${item.version} 的更新说明已保存。`;
+          render();
+          return;
+        }
         if (versionAction.dataset.extensionVersionAction === "delete") {
           if (!confirm(`确定删除扩展程序版本 ${item.version}？开发中版本删除后如需调整配置，请重新新建版本。`)) return;
           const index = extensionVersions.findIndex(version => version.version === item.version);
@@ -2891,7 +2929,18 @@
           return;
         }
         if (versionAction.dataset.extensionVersionAction === "stop") {
-          if (!confirm(`确定停止扩展程序版本 ${item.version}？停止后该版本仅作为历史升级来源保留，不再参与命中。`)) return;
+          const activeOthersExt = extensionVersions.filter(v => v.version !== item.version && ["测试中","发布中","已发布"].includes(v.status));
+          if (activeOthersExt.length === 0) {
+            const confirmed = await openVersionStateModal({
+              title: "停止后无可命中版本",
+              summary: "停止后将无可命中的扩展程序版本，App 将回退到本地缓存版本。",
+              detail: "是否仍然停止？",
+              mode: "confirm"
+            });
+            if (!confirmed) return;
+          } else {
+            if (!confirm(`确定停止扩展程序版本 ${item.version}？停止后该版本仅作为历史升级来源保留，不再参与命中。`)) return;
+          }
           item.status = "已停止";
           item.updatedAt = "2026-06-05 17:30";
           item.log = "版本已停止，保留历史升级来源";
